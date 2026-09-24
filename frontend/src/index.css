@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b0b10;
+  --surface: #131319;
+  --surface-2: #191922;
+  --border: #28283a;
+  --text: #eae8f2;
+  --text-dim: #a6a2ba;
+  --text-faint: #716d88;
+  --violet: #7c3aed;
+  --violet-soft: #9d7bfb;
+  --violet-glow: rgba(157, 123, 251, 0.16);
+  --good: #4ade95;
+  --warn: #f0b45e;
+  --danger: #f87171;
+  --ff-display: "Sora", system-ui, sans-serif;
+  --ff-body: "IBM Plex Sans", system-ui, sans-serif;
+  --ff-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--ff-display);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+::selection {
+  background: var(--violet-glow);
+  color: var(--text);
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--violet-soft);
+  outline-offset: 2px;
+}
