@@ -63,7 +63,7 @@ export async function buildResumeDocx(data, template) {
           new ImageRun({
             type: photo.type,
             data: photo.buffer,
-            transformation: { width: 72, height: 72 },
+            transformation: { width: 90, height: 90 },
             floating: {
               horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, align: HorizontalPositionAlign.RIGHT },
               verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, align: VerticalPositionAlign.TOP },
@@ -81,7 +81,7 @@ export async function buildResumeDocx(data, template) {
   // aussi finement que Word. En réservant explicitement la largeur du médaillon sur les
   // trois lignes d'en-tête, le nom ne peut jamais passer derrière la photo, quel que soit
   // le logiciel qui ouvre le document.
-  const headerIndent = photo ? { right: 1700 } : undefined;
+  const headerIndent = photo ? { right: 2260 } : undefined;
 
   children.push(
     new Paragraph({

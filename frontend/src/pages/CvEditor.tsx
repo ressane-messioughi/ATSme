@@ -188,7 +188,7 @@ function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (data
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="group relative shrink-0 w-[68px] h-[68px] rounded-full border-2 border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] focus-visible:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface)] disabled:opacity-60"
+          className="group relative shrink-0 w-20 h-20 rounded-full border-2 border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] focus-visible:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface)] disabled:opacity-60"
         >
           {photoUrl ? (
             <>

@@ -19,36 +19,39 @@ export default function CvPreview({ data }: { data: ResumeData }) {
   );
 
   return (
-    <div className="relative bg-white text-[13px] leading-snug rounded-lg shadow-sm p-8 min-h-[400px]" style={{ color: INK }}>
-      {/* Photo purement décorative, hors du flux de texte : même principe que dans le PDF
-          et le DOCX générés (voir exporters/pdf.js) — elle n'affecte jamais l'ordre de
-          lecture du contenu qui la suit. */}
-      {data.personal.photoUrl && (
-        <img
-          src={data.personal.photoUrl}
-          alt=""
-          aria-hidden="true"
-          className="absolute top-8 right-8 w-16 h-16 rounded-full object-cover border-2"
-          style={{ borderColor: "#d8d4e8" }}
-        />
-      )}
+    <div className="bg-white text-[13px] leading-snug rounded-lg shadow-sm p-8 min-h-[400px]" style={{ color: INK }}>
+      {/* items-start plutôt qu'un positionnement absolu : la photo s'aligne exactement sur
+          le haut du nom (premier élément du bloc de gauche), et le gap-6 garantit un vrai
+          espace avec elle plutôt qu'une réserve de largeur approximative qui la laissait
+          coller à la ligne de contact/liens en dessous quand le nom était court. Photo
+          purement décorative, hors du flux de texte : même principe que dans le PDF et le
+          DOCX générés (voir exporters/pdf.js) — elle n'affecte jamais l'ordre de lecture du
+          contenu qui la suit. */}
+      <div className="flex items-start justify-between gap-6">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold" style={{ color: INK }}>
+            {data.personal.fullName || "Votre nom"}
+          </h1>
+          {data.personal.title && (
+            <p className="text-sm mt-0.5" style={{ color: VIOLET }}>
+              {data.personal.title}
+            </p>
+          )}
+          {contact.length > 0 && (
+            <p className="text-[11px] mt-1.5" style={{ color: DIM }}>
+              {contact.join("   •   ")}
+            </p>
+          )}
+        </div>
 
-      {/* pr-28 (112px) et non pr-20 : la photo (right-8 + w-16) occupe l'espace de 32 à 96px
-          depuis le bord droit, une réserve de 80px laissait donc 16px de recouvrement
-          possible avec un nom ou une ligne de contact assez longs. */}
-      <div className={data.personal.photoUrl ? "pr-28" : ""}>
-        <h1 className="text-xl font-bold" style={{ color: INK }}>
-          {data.personal.fullName || "Votre nom"}
-        </h1>
-        {data.personal.title && (
-          <p className="text-sm mt-0.5" style={{ color: VIOLET }}>
-            {data.personal.title}
-          </p>
-        )}
-        {contact.length > 0 && (
-          <p className="text-[11px] mt-1.5" style={{ color: DIM }}>
-            {contact.join("   •   ")}
-          </p>
+        {data.personal.photoUrl && (
+          <img
+            src={data.personal.photoUrl}
+            alt=""
+            aria-hidden="true"
+            className="shrink-0 w-20 h-20 rounded-full object-cover border-2"
+            style={{ borderColor: "#d8d4e8" }}
+          />
         )}
       </div>
 

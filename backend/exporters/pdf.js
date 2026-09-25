@@ -62,15 +62,18 @@ function renderAtScale(data, template, scale) {
     // aucun caractère de texte ne provient de cette image — un extracteur ATS qui lit le
     // flux de texte du PDF ne "voit" jamais la photo, dans le désordre ou autrement.
     const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const photoSize = Math.round(80 * Math.max(scale, 0.8));
     let headerWidth = contentWidth;
     if (photo) {
-      const size = Math.round(64 * Math.max(scale, 0.8));
+      const size = photoSize;
       const px = doc.page.width - doc.page.margins.right - size;
       const py = doc.page.margins.top;
       // Sans cette réservation, un nom, un titre ou une ligne de contact assez longs
       // passaient tout droit sous la photo au lieu de s'arrêter avant elle — pdfkit ne
-      // sait pas qu'une zone circulaire y est occupée tant qu'on ne le lui dit pas.
-      headerWidth = px - doc.page.margins.left - 14;
+      // sait pas qu'une zone circulaire y est occupée tant qu'on ne le lui dit pas. 24pt
+      // d'écart (plutôt que 14) donne un vrai espace visuel avec la photo au lieu de
+      // laisser le nom ou la ligne de contact venir la frôler.
+      headerWidth = px - doc.page.margins.left - 24;
       try {
         doc.save();
         doc.circle(px + size / 2, py + size / 2, size / 2).clip();
@@ -101,8 +104,7 @@ function renderAtScale(data, template, scale) {
     // titre) : sans ce plancher, les sections qui suivent remonteraient sous la photo au
     // lieu de commencer une fois le médaillon dégagé.
     if (photo) {
-      const size = Math.round(64 * Math.max(scale, 0.8));
-      const photoBottom = doc.page.margins.top + size;
+      const photoBottom = doc.page.margins.top + photoSize;
       if (doc.y < photoBottom) doc.y = photoBottom;
     }
 
