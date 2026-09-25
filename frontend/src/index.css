@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Thèmes — voir lib/theme.ts pour la liste et le sélecteur dans Paramètres.
+   --violet / --violet-soft / --violet-glow restent nommées ainsi par héritage (c'était le
+   seul thème au départ) mais portent la couleur d'accent de N'IMPORTE quel thème actif :
+   les renommer aurait forcé à toucher chaque composant qui les référence pour un gain
+   cosmétique nul. --good/--warn/--danger portent un sens (succès/alerte/erreur) et ne
+   changent donc pas de couleur d'un thème à l'autre, seulement de nuance pour rester
+   lisibles sur le fond du thème. */
 :root {
   --bg: #0b0b10;
   --surface: #131319;
@@ -19,6 +26,38 @@
   --ff-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
+/* Émeraude Nuit : même structure sombre, accent émeraude plutôt que violet. */
+[data-theme="emerald"] {
+  --violet: #10b981;
+  --violet-soft: #34d399;
+  --violet-glow: rgba(52, 211, 153, 0.16);
+}
+
+/* Ambre Nuit : même structure sombre, accent ambre chaud. */
+[data-theme="amber"] {
+  --violet: #d97706;
+  --violet-soft: #fbbf24;
+  --violet-glow: rgba(251, 191, 36, 0.18);
+}
+
+/* Aurore Claire : seul thème clair — tous les tons neutres et sémantiques sont repensés
+   pour rester lisibles sur fond blanc, pas seulement l'accent. */
+[data-theme="light"] {
+  --bg: #f6f5fa;
+  --surface: #ffffff;
+  --surface-2: #f1eff8;
+  --border: #e3e0ef;
+  --text: #1c1a24;
+  --text-dim: #5c5870;
+  --text-faint: #8d89a3;
+  --violet: #7c3aed;
+  --violet-soft: #6d28d9;
+  --violet-glow: rgba(124, 58, 237, 0.1);
+  --good: #16a34a;
+  --warn: #b45309;
+  --danger: #dc2626;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -35,6 +74,7 @@ body {
   color: var(--text);
   font-family: var(--ff-body);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 h1,

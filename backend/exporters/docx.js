@@ -76,16 +76,34 @@ export async function buildResumeDocx(data, template) {
     );
   }
 
+  // Marge de sécurité en plus du habillage "square" : certains moteurs de rendu ne
+  // recalculent pas toujours la largeur des paragraphes autour d'une image flottante
+  // aussi finement que Word. En réservant explicitement la largeur du médaillon sur les
+  // trois lignes d'en-tête, le nom ne peut jamais passer derrière la photo, quel que soit
+  // le logiciel qui ouvre le document.
+  const headerIndent = photo ? { right: 1700 } : undefined;
+
   children.push(
-    new Paragraph({ children: [new TextRun({ text: data.personal.fullName || "Sans nom", bold: true, size: 40, font: bodyFontName })] })
+    new Paragraph({
+      indent: headerIndent,
+      children: [new TextRun({ text: data.personal.fullName || "Sans nom", bold: true, size: 40, font: bodyFontName })],
+    })
   );
   if (data.personal.title) {
-    children.push(new Paragraph({ children: [new TextRun({ text: data.personal.title, color: style.accent, size: 24, font: bodyFontName })] }));
+    children.push(
+      new Paragraph({
+        indent: headerIndent,
+        children: [new TextRun({ text: data.personal.title, color: style.accent, size: 24, font: bodyFontName })],
+      })
+    );
   }
   const contact = [data.personal.email, data.personal.phone, data.personal.location, ...data.personal.links.map((l) => l.url)]
     .filter(Boolean)
     .join("  •  ");
-  if (contact) children.push(new Paragraph({ spacing: { after: 200 }, children: [new TextRun({ text: contact, color: DIM, size: 18 })] }));
+  if (contact)
+    children.push(
+      new Paragraph({ indent: headerIndent, spacing: { after: 200 }, children: [new TextRun({ text: contact, color: DIM, size: 18 })] })
+    );
 
   if (data.summary) {
     children.push(heading("Profil", style));

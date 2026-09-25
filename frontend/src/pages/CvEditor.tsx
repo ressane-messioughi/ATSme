@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   type Certification,
   type Education,
@@ -25,8 +26,9 @@ import {
 } from "../lib/resumeApi";
 import ScoreGauge from "../components/ScoreGauge.tsx";
 import CvPreview from "../components/CvPreview.tsx";
-import { IconChevronDown, IconChevronUp, IconTrash } from "../components/icons.tsx";
+import { IconChevronDown, IconChevronUp, IconPlusCircle, IconTrash } from "../components/icons.tsx";
 import { resizePhotoToDataUrl } from "../lib/photo.ts";
+import { btnPrimaryCls, btnSecondaryCls, chipCls, chipRemoveCls, dashedAddCls, inputCls, labelCls } from "../lib/ui.ts";
 
 const TABS = [
   { key: "informations", label: "Informations" },
@@ -49,7 +51,7 @@ const BREAKDOWN_LABELS: Record<keyof ScoreBreakdown, [string, number]> = {
 };
 
 const toneClass = { good: "text-[var(--good)]", warn: "text-[var(--warn)]", danger: "text-[var(--danger)]" };
-const dotClass = { good: "bg-[var(--good)]", warn: "bg-[var(--warn)]", danger: "bg-[var(--danger)]" };
+const barClass = { good: "bg-[var(--good)]", warn: "bg-[var(--warn)]", danger: "bg-[var(--danger)]" };
 
 function toneOf(value: number, max: number): "good" | "warn" | "danger" {
   const pct = value / max;
@@ -61,14 +63,15 @@ function toneOf(value: number, max: number): "good" | "warn" | "danger" {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-[var(--ff-mono)] uppercase tracking-wider text-[var(--text-faint)]">{label}</span>
+      <span className={labelCls}>{label}</span>
       {children}
     </label>
   );
 }
 
-const inputCls =
-  "bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-[var(--violet-soft)] transition-colors w-full";
+const tagsWrapCls =
+  "flex flex-wrap items-center gap-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-3 py-2.5 transition-all duration-150 hover:border-[var(--text-faint)] focus-within:border-[var(--violet-soft)] focus-within:ring-[3px] focus-within:ring-[var(--violet-glow)]";
+const tagsInputCls = "flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5";
 
 function TagsInput({ values, onChange, placeholder }: { values: string[]; onChange: (v: string[]) => void; placeholder: string }) {
   const [draft, setDraft] = useState("");
@@ -78,11 +81,11 @@ function TagsInput({ values, onChange, placeholder }: { values: string[]; onChan
     setDraft("");
   }
   return (
-    <div className="flex flex-wrap gap-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 focus-within:border-[var(--violet-soft)] transition-colors">
+    <div className={tagsWrapCls}>
       {values.map((v, i) => (
-        <span key={v + i} className="flex items-center gap-1.5 bg-[var(--violet-glow)] text-[var(--violet-soft)] text-xs rounded-md px-2 py-1">
+        <span key={v + i} className={chipCls}>
           {v}
-          <button type="button" onClick={() => onChange(values.filter((_, idx) => idx !== i))} className="cursor-pointer hover:text-[var(--text)]">
+          <button type="button" onClick={() => onChange(values.filter((_, idx) => idx !== i))} className={chipRemoveCls} aria-label={`Retirer ${v}`}>
             ×
           </button>
         </span>
@@ -98,7 +101,7 @@ function TagsInput({ values, onChange, placeholder }: { values: string[]; onChan
         }}
         onBlur={commit}
         placeholder={values.length ? "" : placeholder}
-        className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
+        className={tagsInputCls}
       />
     </div>
   );
@@ -124,11 +127,16 @@ function ObjectTagsInput<T>({
     setDraft("");
   }
   return (
-    <div className="flex flex-wrap gap-2 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 focus-within:border-[var(--violet-soft)] transition-colors">
+    <div className={tagsWrapCls}>
       {items.map((item, i) => (
-        <span key={i} className="flex items-center gap-1.5 bg-[var(--violet-glow)] text-[var(--violet-soft)] text-xs rounded-md px-2 py-1">
+        <span key={i} className={chipCls}>
           {getLabel(item)}
-          <button type="button" onClick={() => onChange(items.filter((_, idx) => idx !== i))} className="cursor-pointer hover:text-[var(--text)]">
+          <button
+            type="button"
+            onClick={() => onChange(items.filter((_, idx) => idx !== i))}
+            className={chipRemoveCls}
+            aria-label={`Retirer ${getLabel(item)}`}
+          >
             ×
           </button>
         </span>
@@ -144,7 +152,7 @@ function ObjectTagsInput<T>({
         }}
         onBlur={commit}
         placeholder={items.length ? "" : placeholder}
-        className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
+        className={tagsInputCls}
       />
     </div>
   );
@@ -175,38 +183,43 @@ function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (data
 
   return (
     <Field label="Photo (facultatif)">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 p-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="shrink-0 w-16 h-16 rounded-full border border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface-2)] disabled:opacity-60"
+          className="group relative shrink-0 w-[68px] h-[68px] rounded-full border-2 border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] focus-visible:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface)] disabled:opacity-60"
         >
           {photoUrl ? (
-            <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+            <>
+              <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+              <span className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors grid place-items-center text-[10px] font-medium text-white opacity-0 group-hover:opacity-100">
+                Changer
+              </span>
+            </>
           ) : (
-            <span className="text-[10px] text-[var(--text-faint)] font-[var(--ff-mono)] px-1 text-center">
-              {busy ? "..." : "Ajouter"}
+            <span className="text-[var(--text-faint)] group-hover:text-[var(--violet-soft)] transition-colors">
+              <IconPlusCircle className="w-5 h-5" />
             </span>
           )}
         </button>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex gap-3">
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={busy}
-              className="text-xs text-[var(--violet-soft)] hover:underline cursor-pointer disabled:opacity-60"
+              className="text-xs font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer disabled:opacity-60"
             >
-              {photoUrl ? "Changer" : "Choisir une photo"}
+              {busy ? "Traitement..." : photoUrl ? "Changer la photo" : "Choisir une photo"}
             </button>
             {photoUrl && (
-              <button type="button" onClick={() => onChange("")} className="text-xs text-[var(--danger)] hover:underline cursor-pointer">
+              <button type="button" onClick={() => onChange("")} className="text-xs font-medium text-[var(--danger)] hover:opacity-80 transition-opacity cursor-pointer">
                 Retirer
               </button>
             )}
           </div>
-          <p className="text-[11px] text-[var(--text-faint)] max-w-[260px]">
+          <p className="text-[11px] leading-relaxed text-[var(--text-faint)] max-w-[280px]">
             Purement décorative dans l'export : elle n'entre jamais dans le texte analysé, donc n'affecte pas votre score ATS.
           </p>
           {error && <p className="text-[11px] text-[var(--danger)]">{error}</p>}
@@ -236,20 +249,23 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 
 function ReorderButtons({ index, length, onMove }: { index: number; length: number; onMove: (dir: -1 | 1) => void }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col rounded-lg border border-[var(--border)] overflow-hidden shrink-0">
       <button
         type="button"
         disabled={index === 0}
         onClick={() => onMove(-1)}
-        className="text-[var(--text-faint)] hover:text-[var(--text)] disabled:opacity-25 cursor-pointer disabled:cursor-default"
+        aria-label="Monter"
+        className="p-1 text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
       >
         <IconChevronUp className="w-3.5 h-3.5" />
       </button>
+      <div className="h-px bg-[var(--border)]" />
       <button
         type="button"
         disabled={index === length - 1}
         onClick={() => onMove(1)}
-        className="text-[var(--text-faint)] hover:text-[var(--text)] disabled:opacity-25 cursor-pointer disabled:cursor-default"
+        aria-label="Descendre"
+        className="p-1 text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
       >
         <IconChevronDown className="w-3.5 h-3.5" />
       </button>
@@ -387,38 +403,40 @@ export default function CvEditor() {
     <div className="max-w-[1400px]">
       <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <div className="flex-1 min-w-[240px]">
-          <button onClick={() => navigate("/cv")} className="text-xs font-[var(--ff-mono)] text-[var(--text-faint)] hover:text-[var(--text)] mb-2 cursor-pointer">
-            ← Mes CV
+          <button onClick={() => navigate("/cv")} className="flex items-center gap-1 text-xs font-[var(--ff-mono)] text-[var(--text-faint)] hover:text-[var(--text)] mb-2 cursor-pointer transition-colors">
+            <span aria-hidden="true">←</span> Mes CV
           </button>
           <div className="flex items-center gap-3">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-xl font-bold bg-transparent outline-none border-b border-transparent focus:border-[var(--border)]"
+              className="text-xl font-bold bg-transparent outline-none rounded-md -mx-1.5 px-1.5 py-0.5 transition-colors focus:bg-[var(--surface-2)]"
             />
-            <span className="text-xs text-[var(--text-faint)] font-[var(--ff-mono)]">
-              {saveState === "saving" ? "Enregistrement..." : saveState === "saved" ? "✓ Enregistré" : ""}
+            <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)] font-[var(--ff-mono)]">
+              {saveState === "saving" && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--warn)] animate-pulse" /> Enregistrement...
+                </>
+              )}
+              {saveState === "saved" && (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--good)]" /> Enregistré
+                </>
+              )}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowPreview((v) => !v)}
-            className="lg:hidden text-xs font-[var(--ff-mono)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-dim)] hover:border-[var(--violet-soft)] transition-colors cursor-pointer"
+            className="lg:hidden text-xs font-[var(--ff-mono)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[var(--text-dim)] hover:border-[var(--violet-soft)] transition-colors cursor-pointer"
           >
             {showPreview ? "Éditeur" : "Aperçu"}
           </button>
-          <button
-            onClick={onSave}
-            disabled={saveState === "saving"}
-            className="bg-[var(--surface-2)] border border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 cursor-pointer"
-          >
+          <button onClick={onSave} disabled={saveState === "saving"} className={btnSecondaryCls}>
             Enregistrer
           </button>
-          <button
-            onClick={() => setExportOpen(true)}
-            className="bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg px-4 py-2 text-sm font-medium text-white cursor-pointer"
-          >
+          <button onClick={() => setExportOpen(true)} className={btnPrimaryCls}>
             Exporter
           </button>
         </div>
@@ -426,16 +444,19 @@ export default function CvEditor() {
 
       {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
 
-      <div className="flex gap-1 border-b border-[var(--border)] mb-6 overflow-x-auto">
+      <div className="relative flex gap-1 border-b border-[var(--border)] mb-6 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-3.5 py-2.5 text-sm whitespace-nowrap border-b-2 -mb-px transition-colors cursor-pointer ${
-              tab === t.key ? "border-[var(--violet)] text-[var(--text)] font-medium" : "border-transparent text-[var(--text-faint)] hover:text-[var(--text-dim)]"
+            className={`relative px-3.5 py-2.5 text-sm whitespace-nowrap transition-colors cursor-pointer ${
+              tab === t.key ? "text-[var(--text)] font-medium" : "text-[var(--text-faint)] hover:text-[var(--text-dim)]"
             }`}
           >
             {t.label}
+            {tab === t.key && (
+              <motion.span layoutId="cv-editor-tab-underline" className="absolute left-0 right-0 -bottom-px h-0.5 bg-[var(--violet)] rounded-full" transition={{ type: "spring", stiffness: 500, damping: 40 }} />
+            )}
           </button>
         ))}
       </div>
@@ -526,25 +547,32 @@ export default function CvEditor() {
         <div className="flex flex-col gap-5">
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
             <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-4 text-center">Score ATS</p>
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center mb-5">
               <ScoreGauge score={score} size={110} />
             </div>
             {breakdown && (
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-1">Détails de l'analyse</p>
+              <div className="flex flex-col gap-3.5">
+                <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] -mb-1">Détails de l'analyse</p>
                 {(Object.keys(BREAKDOWN_LABELS) as (keyof ScoreBreakdown)[]).map((key) => {
                   const [label, max] = BREAKDOWN_LABELS[key];
                   const value = breakdown[key] ?? 0;
                   const tone = toneOf(value, max);
                   return (
-                    <div key={key} className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-2 text-[var(--text-dim)]">
-                        <span className={`w-1.5 h-1.5 rounded-full ${dotClass[tone]}`} />
-                        {label}
-                      </span>
-                      <span className="font-[var(--ff-mono)]">
-                        {value}/{max}
-                      </span>
+                    <div key={key} className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[var(--text-dim)]">{label}</span>
+                        <span className={`font-[var(--ff-mono)] font-medium ${toneClass[tone]}`}>
+                          {value}/{max}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${barClass[tone]}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(value / max) * 100}%` }}
+                          transition={{ duration: 0.5, ease: "easeOut" }}
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -555,11 +583,11 @@ export default function CvEditor() {
           {recommendations.length > 0 && (
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
               <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-3">Recommandations</p>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3.5">
                 {recommendations.map((r, i) => (
-                  <div key={i} className="border-l-2 border-[var(--warn)] pl-3">
-                    <p className="text-sm font-medium mb-1">{r.issue}</p>
-                    <p className={`text-xs ${toneClass.good}`}>{r.fix}</p>
+                  <div key={i} className="rounded-lg bg-[var(--warn)]/8 border border-[var(--warn)]/20 p-3">
+                    <p className="text-sm font-medium mb-1.5">{r.issue}</p>
+                    <p className={`text-xs leading-relaxed ${toneClass.good}`}>→ {r.fix}</p>
                   </div>
                 ))}
               </div>
@@ -569,22 +597,22 @@ export default function CvEditor() {
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)]">Versions</p>
-              <button onClick={onSaveVersion} className="text-xs text-[var(--violet-soft)] hover:underline cursor-pointer">
-                + Nouvelle
+              <button onClick={onSaveVersion} className="flex items-center gap-1 text-xs font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer">
+                <IconPlusCircle className="w-3.5 h-3.5" /> Nouvelle
               </button>
             </div>
             {versions.length === 0 && <p className="text-xs text-[var(--text-faint)]">Aucune version enregistrée.</p>}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1 -mx-2">
               {versions.map((v) => (
-                <div key={v.id} className="flex items-center justify-between text-xs">
-                  <span className="text-[var(--text-dim)]">
+                <div key={v.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors">
+                  <span className="text-[var(--text-dim)] truncate pr-2">
                     {v.label || new Date(v.created_at).toLocaleDateString("fr-FR")} · {v.ats_score ?? "—"}/100
                   </span>
-                  <span className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => onRestore(v.id)} className="text-[var(--violet-soft)] hover:underline cursor-pointer">
+                  <span className="flex items-center gap-2.5 shrink-0">
+                    <button onClick={() => onRestore(v.id)} className="font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer">
                       Restaurer
                     </button>
-                    <button onClick={() => onDuplicateVersion(v.id)} className="text-[var(--text-dim)] hover:underline cursor-pointer">
+                    <button onClick={() => onDuplicateVersion(v.id)} className="text-[var(--text-faint)] hover:text-[var(--text-dim)] transition-colors cursor-pointer">
                       Dupliquer
                     </button>
                   </span>
@@ -601,24 +629,26 @@ export default function CvEditor() {
               value={jobText}
               onChange={(e) => setJobText(e.target.value)}
             />
-            <button
-              onClick={onJobMatch}
-              disabled={matching || !jobText.trim()}
-              className="w-full bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg py-2 text-sm font-medium text-white disabled:opacity-50 cursor-pointer mb-3"
-            >
+            <button onClick={onJobMatch} disabled={matching || !jobText.trim()} className={`${btnPrimaryCls} w-full mb-3`}>
               {matching ? "Analyse..." : "Analyser le matching"}
             </button>
             {matchResult && (
               <div>
-                <p className="font-[var(--ff-mono)] text-2xl font-bold mb-2">{matchResult.score}%</p>
+                <div className="flex items-baseline gap-2 mb-2.5">
+                  <p className="font-[var(--ff-mono)] text-2xl font-bold">{matchResult.score}%</p>
+                  <p className="text-xs text-[var(--text-faint)]">de correspondance</p>
+                </div>
                 {matchResult.missing.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {matchResult.missing.slice(0, 8).map((k) => (
-                      <span key={k} className="text-xs bg-[var(--surface-2)] text-[var(--danger)] rounded px-1.5 py-0.5">
-                        {k}
-                      </span>
-                    ))}
-                  </div>
+                  <>
+                    <p className={`${labelCls} mb-1.5`}>Mots-clés manquants</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {matchResult.missing.slice(0, 8).map((k) => (
+                        <span key={k} className="text-xs bg-[var(--danger)]/10 border border-[var(--danger)]/25 text-[var(--danger)] rounded-full px-2 py-0.5">
+                          {k}
+                        </span>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -626,14 +656,16 @@ export default function CvEditor() {
         </div>
       </div>
 
-      {exportOpen && (
-        <ExportModal
-          resumeId={resume.id}
-          title={title}
-          data={data}
-          onClose={() => setExportOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {exportOpen && (
+          <ExportModal
+            resumeId={resume.id}
+            title={title}
+            data={data}
+            onClose={() => setExportOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -659,30 +691,52 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4" onClick={onClose}>
-      <div
-        className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 max-w-3xl w-full grid md:grid-cols-[1fr_260px] gap-6 max-h-[85vh] overflow-y-auto"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 max-w-3xl w-full grid md:grid-cols-[1fr_260px] gap-6 max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-lg font-bold">Exporter mon CV</h2>
-            <button onClick={onClose} className="text-[var(--text-faint)] hover:text-[var(--text)] cursor-pointer text-xl leading-none">
+            <button
+              onClick={onClose}
+              aria-label="Fermer"
+              className="grid place-items-center w-7 h-7 rounded-full text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer text-xl leading-none"
+            >
               ×
             </button>
           </div>
           <p className="text-sm text-[var(--text-dim)] mb-5">Choisissez le format qui vous convient le mieux.</p>
-          <div className="flex flex-col gap-3 mb-5">
+          <div className="flex flex-col gap-2.5 mb-5">
             {options.map((o) => (
               <button
                 key={o.value}
                 onClick={() => setFormat(o.value)}
-                className={`text-left border rounded-xl px-4 py-3 transition-colors cursor-pointer ${
+                className={`flex items-start gap-3 text-left border rounded-xl px-4 py-3 transition-all duration-150 cursor-pointer ${
                   format === o.value ? "border-[var(--violet-soft)] bg-[var(--violet-glow)]" : "border-[var(--border)] hover:border-[var(--text-faint)]"
                 }`}
               >
-                <p className="text-sm font-medium mb-0.5">{o.label}</p>
-                <p className="text-xs text-[var(--text-dim)]">{o.desc}</p>
+                <span
+                  className={`mt-0.5 shrink-0 w-4 h-4 rounded-full border-2 grid place-items-center transition-colors ${
+                    format === o.value ? "border-[var(--violet-soft)]" : "border-[var(--border)]"
+                  }`}
+                >
+                  {format === o.value && <span className="w-2 h-2 rounded-full bg-[var(--violet-soft)]" />}
+                </span>
+                <span>
+                  <p className="text-sm font-medium mb-0.5">{o.label}</p>
+                  <p className="text-xs text-[var(--text-dim)]">{o.desc}</p>
+                </span>
               </button>
             ))}
           </div>
@@ -704,22 +758,18 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
             </label>
           )}
 
-          <button
-            onClick={onExport}
-            disabled={exporting}
-            className="w-full bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg py-2.5 text-sm font-medium text-white disabled:opacity-60 cursor-pointer"
-          >
+          <button onClick={onExport} disabled={exporting} className={`${btnPrimaryCls} w-full py-2.5`}>
             {exporting ? "Export en cours..." : "Exporter le CV"}
           </button>
         </div>
         <div className="hidden md:block">
           <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-2">Aperçu</p>
-          <div className="scale-[0.85] origin-top-left w-[118%]">
+          <div className="scale-[0.85] origin-top-left w-[118%] rounded-lg overflow-hidden ring-1 ring-[var(--border)]">
             <CvPreview data={data} />
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -736,14 +786,23 @@ function ExperienceList({ experiences, onChange }: { experiences: Experience[]; 
   return (
     <div className="flex flex-col gap-4">
       {experiences.map((exp, i) => (
-        <div key={i} className="border border-[var(--border)] rounded-xl p-4">
-          <div className="flex justify-between items-start mb-2">
-            <ReorderButtons index={i} length={experiences.length} onMove={(dir) => onChange(move(experiences, i, i + dir))} />
-            <button onClick={() => remove(i)} className="text-[var(--danger)] hover:opacity-80 cursor-pointer">
+        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] text-[10px] font-[var(--ff-mono)] font-bold">
+                {i + 1}
+              </span>
+              <ReorderButtons index={i} length={experiences.length} onMove={(dir) => onChange(move(experiences, i, i + dir))} />
+            </div>
+            <button
+              onClick={() => remove(i)}
+              aria-label="Supprimer cette expérience"
+              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer"
+            >
               <IconTrash className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 mb-3">
+          <div className="grid sm:grid-cols-2 gap-3.5 mb-3.5">
             <Field label="Poste">
               <input className={inputCls} value={exp.role} onChange={(e) => update(i, { role: e.target.value })} />
             </Field>
@@ -753,7 +812,7 @@ function ExperienceList({ experiences, onChange }: { experiences: Experience[]; 
             <Field label="Localisation">
               <input className={inputCls} value={exp.location || ""} onChange={(e) => update(i, { location: e.target.value })} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3.5">
               <Field label="Début">
                 <input className={inputCls} placeholder="2022-01" value={exp.startDate} onChange={(e) => update(i, { startDate: e.target.value })} />
               </Field>
@@ -765,18 +824,15 @@ function ExperienceList({ experiences, onChange }: { experiences: Experience[]; 
           <Field label="Description">
             <textarea className={`${inputCls} min-h-[70px] resize-y`} value={exp.description || ""} onChange={(e) => update(i, { description: e.target.value })} />
           </Field>
-          <div className="mt-3">
+          <div className="mt-3.5">
             <Field label="Réalisations">
               <TagsInput values={exp.achievements} onChange={(v) => update(i, { achievements: v })} placeholder="Ajouter une réalisation chiffrée" />
             </Field>
           </div>
         </div>
       ))}
-      <button
-        onClick={add}
-        className="border border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors rounded-xl py-3 text-sm text-[var(--text-dim)] cursor-pointer"
-      >
-        + Ajouter une expérience
+      <button onClick={add} className={dashedAddCls}>
+        <IconPlusCircle className="w-4 h-4" /> Ajouter une expérience
       </button>
     </div>
   );
@@ -793,11 +849,11 @@ function EducationList({ education, onChange }: { education: Education[]; onChan
     onChange([...education, { school: "", degree: "", date: "" }]);
   }
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3.5">
       {education.map((ed, i) => (
-        <div key={i} className="border border-[var(--border)] rounded-xl p-4 flex gap-3">
+        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4 flex gap-3.5">
           <ReorderButtons index={i} length={education.length} onMove={(dir) => onChange(move(education, i, i + dir))} />
-          <div className="flex-1 grid sm:grid-cols-3 gap-3">
+          <div className="flex-1 grid sm:grid-cols-3 gap-3.5">
             <Field label="Diplôme">
               <input className={inputCls} value={ed.degree} onChange={(e) => update(i, { degree: e.target.value })} />
             </Field>
@@ -808,18 +864,19 @@ function EducationList({ education, onChange }: { education: Education[]; onChan
               <Field label="Date">
                 <input className={inputCls} value={ed.date || ""} onChange={(e) => update(i, { date: e.target.value })} />
               </Field>
-              <button onClick={() => remove(i)} className="text-[var(--danger)] hover:opacity-80 cursor-pointer mb-2.5 shrink-0">
+              <button
+                onClick={() => remove(i)}
+                aria-label="Supprimer cette formation"
+                className="grid place-items-center w-9 h-9 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer shrink-0"
+              >
                 <IconTrash className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
       ))}
-      <button
-        onClick={add}
-        className="border border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors rounded-xl py-3 text-sm text-[var(--text-dim)] cursor-pointer"
-      >
-        + Ajouter une formation
+      <button onClick={add} className={dashedAddCls}>
+        <IconPlusCircle className="w-4 h-4" /> Ajouter une formation
       </button>
     </div>
   );
@@ -836,16 +893,25 @@ function ProjectList({ projects, onChange }: { projects: Project[]; onChange: (v
     onChange([...projects, { id: rid(), name: "", description: "", url: "" }]);
   }
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3.5">
       {projects.map((p, i) => (
-        <div key={i} className="border border-[var(--border)] rounded-xl p-4">
-          <div className="flex justify-between items-start mb-2">
-            <ReorderButtons index={i} length={projects.length} onMove={(dir) => onChange(move(projects, i, i + dir))} />
-            <button onClick={() => remove(i)} className="text-[var(--danger)] hover:opacity-80 cursor-pointer">
+        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4">
+          <div className="flex justify-between items-center mb-3.5">
+            <div className="flex items-center gap-2.5">
+              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] text-[10px] font-[var(--ff-mono)] font-bold">
+                {i + 1}
+              </span>
+              <ReorderButtons index={i} length={projects.length} onMove={(dir) => onChange(move(projects, i, i + dir))} />
+            </div>
+            <button
+              onClick={() => remove(i)}
+              aria-label="Supprimer ce projet"
+              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer"
+            >
               <IconTrash className="w-4 h-4" />
             </button>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 mb-3">
+          <div className="grid sm:grid-cols-2 gap-3.5 mb-3.5">
             <Field label="Nom">
               <input className={inputCls} value={p.name} onChange={(e) => update(i, { name: e.target.value })} />
             </Field>
@@ -858,11 +924,8 @@ function ProjectList({ projects, onChange }: { projects: Project[]; onChange: (v
           </Field>
         </div>
       ))}
-      <button
-        onClick={add}
-        className="border border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors rounded-xl py-3 text-sm text-[var(--text-dim)] cursor-pointer"
-      >
-        + Ajouter un projet
+      <button onClick={add} className={dashedAddCls}>
+        <IconPlusCircle className="w-4 h-4" /> Ajouter un projet
       </button>
     </div>
   );

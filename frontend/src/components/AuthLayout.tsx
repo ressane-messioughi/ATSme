@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { motion } from "framer-motion";
+import BrandOrb from "./BrandOrb.tsx";
 
 export default function AuthLayout({
   title,
@@ -11,19 +13,17 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] grid place-items-center px-4">
-      <div className="w-full max-w-sm">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 justify-center mb-8">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--violet)] to-[var(--violet-soft)] grid place-items-center text-white text-sm font-bold font-[var(--ff-display)] shadow-[0_4px_14px_var(--violet-glow)]">
-            A
-          </span>
+          <BrandOrb size={34} className="shrink-0 drop-shadow-[0_4px_14px_var(--violet-glow)]" />
           <span className="font-[var(--ff-display)] font-bold text-lg tracking-tight">ATSme</span>
         </div>
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl px-7 py-8">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl px-7 py-8 shadow-xl">
           <h1 className="text-xl font-bold mb-1.5">{title}</h1>
           <p className="text-sm text-[var(--text-dim)] mb-7">{subtitle}</p>
           {children}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

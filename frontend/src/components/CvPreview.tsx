@@ -33,7 +33,10 @@ export default function CvPreview({ data }: { data: ResumeData }) {
         />
       )}
 
-      <div className="pr-20">
+      {/* pr-28 (112px) et non pr-20 : la photo (right-8 + w-16) occupe l'espace de 32 à 96px
+          depuis le bord droit, une réserve de 80px laissait donc 16px de recouvrement
+          possible avec un nom ou une ligne de contact assez longs. */}
+      <div className={data.personal.photoUrl ? "pr-28" : ""}>
         <h1 className="text-xl font-bold" style={{ color: INK }}>
           {data.personal.fullName || "Votre nom"}
         </h1>

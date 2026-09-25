@@ -61,10 +61,16 @@ function renderAtScale(data, template, scale) {
     // celui du bloc nom/titre/contact juste en dessous. Aucune colonne, aucun tableau,
     // aucun caractère de texte ne provient de cette image — un extracteur ATS qui lit le
     // flux de texte du PDF ne "voit" jamais la photo, dans le désordre ou autrement.
+    const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    let headerWidth = contentWidth;
     if (photo) {
       const size = Math.round(64 * Math.max(scale, 0.8));
       const px = doc.page.width - doc.page.margins.right - size;
       const py = doc.page.margins.top;
+      // Sans cette réservation, un nom, un titre ou une ligne de contact assez longs
+      // passaient tout droit sous la photo au lieu de s'arrêter avant elle — pdfkit ne
+      // sait pas qu'une zone circulaire y est occupée tant qu'on ne le lui dit pas.
+      headerWidth = px - doc.page.margins.left - 14;
       try {
         doc.save();
         doc.circle(px + size / 2, py + size / 2, size / 2).clip();
@@ -77,14 +83,27 @@ function renderAtScale(data, template, scale) {
       }
     }
 
-    doc.fillColor(INK).font(style.nameFont).fontSize(22 * scale).text(data.personal.fullName || "Sans nom");
+    doc
+      .fillColor(INK)
+      .font(style.nameFont)
+      .fontSize(22 * scale)
+      .text(data.personal.fullName || "Sans nom", doc.page.margins.left, doc.y, { width: headerWidth });
     if (data.personal.title) {
-      doc.font(style.bodyFont).fontSize(13 * scale).fillColor(style.accentHex).text(data.personal.title);
+      doc.font(style.bodyFont).fontSize(13 * scale).fillColor(style.accentHex).text(data.personal.title, { width: headerWidth });
     }
     const contact = contactLine(data.personal);
     if (contact) {
       doc.moveDown(0.3 * scale);
-      doc.font(style.bodyFont).fontSize(9.5 * scale).fillColor(DIM).text(contact);
+      doc.font(style.bodyFont).fontSize(9.5 * scale).fillColor(DIM).text(contact, { width: headerWidth });
+    }
+
+    // Le bloc nom/titre/contact peut être plus court que la photo (nom court, pas de
+    // titre) : sans ce plancher, les sections qui suivent remonteraient sous la photo au
+    // lieu de commencer une fois le médaillon dégagé.
+    if (photo) {
+      const size = Math.round(64 * Math.max(scale, 0.8));
+      const photoBottom = doc.page.margins.top + size;
+      if (doc.y < photoBottom) doc.y = photoBottom;
     }
 
     if (data.summary) {
