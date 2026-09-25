@@ -1,8 +1,15 @@
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion, type Variants } from "framer-motion";
 import { type ResumeSummary, importResume, listResumes, scoreTone } from "../lib/resumeApi";
 import { useAuth } from "../lib/auth.tsx";
+import BrandOrb from "../components/BrandOrb.tsx";
 import { IconPlusCircle, IconUpload } from "../components/icons.tsx";
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.35, delay: i * 0.05, ease: "easeOut" } }),
+};
 
 const ringColor = { good: "var(--good)", warn: "var(--warn)", danger: "var(--danger)" };
 
@@ -43,10 +50,19 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-6xl">
-      <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Bonjour {user?.name?.split(" ")[0]} 👋</h1>
-          <p className="text-[var(--text-dim)] text-sm mt-1">Créez un CV optimisé et maximisez vos chances d'être recruté.</p>
+      <motion.div
+        initial="hidden"
+        animate="show"
+        custom={0}
+        variants={fadeUp}
+        className="flex items-start justify-between gap-4 mb-8 flex-wrap"
+      >
+        <div className="flex items-center gap-4">
+          <BrandOrb size={72} className="hidden sm:block shrink-0 drop-shadow-[0_8px_24px_var(--violet-glow)]" />
+          <div>
+            <h1 className="text-2xl font-bold">Bonjour {user?.name?.split(" ")[0]} 👋</h1>
+            <p className="text-[var(--text-dim)] text-sm mt-1">Créez un CV optimisé et maximisez vos chances d'être recruté.</p>
+          </div>
         </div>
         <button
           onClick={() => navigate("/cv/nouveau")}
@@ -55,11 +71,11 @@ export default function Dashboard() {
           <IconPlusCircle className="w-4 h-4" />
           Nouveau CV
         </button>
-      </div>
+      </motion.div>
 
       {error && <p className="text-sm text-[var(--danger)] mb-6">{error}</p>}
 
-      <div className="grid lg:grid-cols-2 gap-4 mb-6">
+      <motion.div initial="hidden" animate="show" custom={1} variants={fadeUp} className="grid lg:grid-cols-2 gap-4 mb-6">
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold">Mes CV récents</h2>
@@ -140,9 +156,15 @@ export default function Dashboard() {
             <p className="text-[11px] text-[var(--text-faint)] mt-4">Formats acceptés : PDF, DOCX</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
+      <motion.div
+        initial="hidden"
+        animate="show"
+        custom={2}
+        variants={fadeUp}
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5"
+      >
         <h2 className="text-sm font-semibold mb-4">Vos statistiques</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Stat label="CV créés" value={resumes ? String(resumes.length) : "—"} />
@@ -150,7 +172,7 @@ export default function Dashboard() {
           <Stat label="Meilleur score" value={bestScore != null ? `${bestScore}/100` : "—"} />
           <Stat label="Analyses" value={resumes ? String(scored.length) : "—"} />
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
+import BrandOrb from "./BrandOrb.tsx";
 import {
   IconBriefcase,
   IconChart,
   IconDashboard,
   IconFile,
   IconHistory,
-  IconLogo,
   IconPlusCircle,
   IconSettings,
   IconLayers,
@@ -28,9 +28,7 @@ export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[var(--border)] px-4 py-6">
       <div className="flex items-center gap-2.5 px-2 mb-8">
-        <span className="w-7 h-7 p-1.5 rounded-lg bg-gradient-to-br from-[var(--violet)] to-[var(--violet-soft)] text-white shadow-[0_4px_14px_var(--violet-glow)]">
-          <IconLogo />
-        </span>
+        <BrandOrb size={30} className="shrink-0 drop-shadow-[0_4px_14px_var(--violet-glow)]" />
         <span className="font-[var(--ff-display)] font-bold text-[15px] tracking-tight">ATSme</span>
       </div>
       <nav className="flex flex-col gap-1 flex-1">

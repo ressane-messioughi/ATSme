@@ -405,14 +405,14 @@ app.get("/api/resumes/:id/job-match/latest", requireAuth, async (req, res) => {
 app.get("/api/resumes/:id/export/:format", requireAuth, async (req, res) => {
   const row = await ownedResumeRow(req.params.id, req.user.sub);
   if (!row) return res.status(404).json({ error: "introuvable" });
-  await sendExport(res, row, req.params.format);
+  await sendExport(res, row, req.params.format, { singlePage: req.query.singlePage === "1" });
 });
 
-async function sendExport(res, row, format) {
+async function sendExport(res, row, format, options = {}) {
   const data = normalizeResumeData(typeof row.data === "string" ? JSON.parse(row.data) : row.data);
   const filename = (row.title || "cv").replace(/[^\w\- ]/g, "").trim() || "cv";
   if (format === "pdf") {
-    const buffer = await buildResumePdf(data, row.template);
+    const buffer = await buildResumePdf(data, row.template, { singlePage: Boolean(options.singlePage) });
     res.set({ "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="${filename}.pdf"` });
     return res.send(buffer);
   }

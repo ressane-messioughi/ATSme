@@ -26,6 +26,7 @@ import {
 import ScoreGauge from "../components/ScoreGauge.tsx";
 import CvPreview from "../components/CvPreview.tsx";
 import { IconChevronDown, IconChevronUp, IconTrash } from "../components/icons.tsx";
+import { resizePhotoToDataUrl } from "../lib/photo.ts";
 
 const TABS = [
   { key: "informations", label: "Informations" },
@@ -146,6 +147,82 @@ function ObjectTagsInput<T>({
         className="flex-1 min-w-[120px] bg-transparent outline-none text-sm"
       />
     </div>
+  );
+}
+
+function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (dataUrl: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onPick(file: File | undefined) {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+      setError("Formats acceptés : JPEG, PNG ou WebP.");
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    try {
+      const dataUrl = await resizePhotoToDataUrl(file);
+      onChange(dataUrl);
+    } catch {
+      setError("La photo n'a pas pu être traitée.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Field label="Photo (facultatif)">
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+          className="shrink-0 w-16 h-16 rounded-full border border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface-2)] disabled:opacity-60"
+        >
+          {photoUrl ? (
+            <img src={photoUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-[10px] text-[var(--text-faint)] font-[var(--ff-mono)] px-1 text-center">
+              {busy ? "..." : "Ajouter"}
+            </span>
+          )}
+        </button>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={busy}
+              className="text-xs text-[var(--violet-soft)] hover:underline cursor-pointer disabled:opacity-60"
+            >
+              {photoUrl ? "Changer" : "Choisir une photo"}
+            </button>
+            {photoUrl && (
+              <button type="button" onClick={() => onChange("")} className="text-xs text-[var(--danger)] hover:underline cursor-pointer">
+                Retirer
+              </button>
+            )}
+          </div>
+          <p className="text-[11px] text-[var(--text-faint)] max-w-[260px]">
+            Purement décorative dans l'export : elle n'entre jamais dans le texte analysé, donc n'affecte pas votre score ATS.
+          </p>
+          {error && <p className="text-[11px] text-[var(--danger)]">{error}</p>}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            onPick(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
+      </div>
+    </Field>
   );
 }
 
@@ -367,6 +444,7 @@ export default function CvEditor() {
         <div className={`min-w-0 ${showPreview ? "hidden lg:block" : ""}`}>
           {tab === "informations" && (
             <div className="flex flex-col gap-5">
+              <PhotoField photoUrl={data.personal.photoUrl} onChange={(v) => updatePersonal("photoUrl", v)} />
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Nom complet">
                   <input className={inputCls} value={data.personal.fullName} onChange={(e) => updatePersonal("fullName", e.target.value)} />
@@ -562,6 +640,7 @@ export default function CvEditor() {
 
 function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; title: string; data: ResumeData; onClose: () => void }) {
   const [format, setFormat] = useState<"pdf" | "docx" | "txt">("pdf");
+  const [singlePage, setSinglePage] = useState(false);
   const [exporting, setExporting] = useState(false);
   const options = [
     { value: "pdf" as const, label: "PDF (Recommandé)", desc: "Format universel, idéal pour les candidatures en ligne." },
@@ -572,7 +651,7 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
   async function onExport() {
     setExporting(true);
     try {
-      await downloadExport(resumeId, format, title || "cv");
+      await downloadExport(resumeId, format, title || "cv", { singlePage: format === "pdf" && singlePage });
       onClose();
     } catch {
       setExporting(false);
@@ -607,6 +686,24 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
               </button>
             ))}
           </div>
+
+          {format === "pdf" && (
+            <label className="flex items-start gap-2.5 mb-5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={singlePage}
+                onChange={(e) => setSinglePage(e.target.checked)}
+                className="mt-0.5 accent-[var(--violet)] cursor-pointer"
+              />
+              <span>
+                <span className="text-sm block">Format compact — tient sur une seule page</span>
+                <span className="text-xs text-[var(--text-dim)] block mt-0.5">
+                  Réduit légèrement les tailles de police et les marges si besoin. N'affecte ni votre contenu, ni votre score ATS.
+                </span>
+              </span>
+            </label>
+          )}
+
           <button
             onClick={onExport}
             disabled={exporting}

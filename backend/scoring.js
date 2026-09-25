@@ -80,7 +80,12 @@ function scoreSections(data) {
 }
 
 function scoreAtsCompat(data) {
-  let pts = 4; // rendu texte, mono-colonne, sans image ni tableau — garanti par le moteur de templates
+  // Rendu texte en une seule colonne, sans tableau — garanti par le moteur de templates.
+  // La photo de profil, quand il y en a une, est un élément purement décoratif positionné
+  // hors du flux de lecture (voir exporters/pdf.js) : elle ne contient aucun texte, ne
+  // déplace aucune section et ne casse donc jamais l'ordre d'extraction linéaire qu'un ATS
+  // s'attend à lire. Elle n'a donc aucune raison de faire perdre des points ici.
+  let pts = 4;
   const wordCount = [
     data.summary,
     ...data.experiences.map((e) => e.description || ""),

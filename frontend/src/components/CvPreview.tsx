@@ -19,20 +19,35 @@ export default function CvPreview({ data }: { data: ResumeData }) {
   );
 
   return (
-    <div className="bg-white text-[13px] leading-snug rounded-lg shadow-sm p-8 min-h-[400px]" style={{ color: INK }}>
-      <h1 className="text-xl font-bold" style={{ color: INK }}>
-        {data.personal.fullName || "Votre nom"}
-      </h1>
-      {data.personal.title && (
-        <p className="text-sm mt-0.5" style={{ color: VIOLET }}>
-          {data.personal.title}
-        </p>
+    <div className="relative bg-white text-[13px] leading-snug rounded-lg shadow-sm p-8 min-h-[400px]" style={{ color: INK }}>
+      {/* Photo purement décorative, hors du flux de texte : même principe que dans le PDF
+          et le DOCX générés (voir exporters/pdf.js) — elle n'affecte jamais l'ordre de
+          lecture du contenu qui la suit. */}
+      {data.personal.photoUrl && (
+        <img
+          src={data.personal.photoUrl}
+          alt=""
+          aria-hidden="true"
+          className="absolute top-8 right-8 w-16 h-16 rounded-full object-cover border-2"
+          style={{ borderColor: "#d8d4e8" }}
+        />
       )}
-      {contact.length > 0 && (
-        <p className="text-[11px] mt-1.5" style={{ color: DIM }}>
-          {contact.join("   •   ")}
-        </p>
-      )}
+
+      <div className="pr-20">
+        <h1 className="text-xl font-bold" style={{ color: INK }}>
+          {data.personal.fullName || "Votre nom"}
+        </h1>
+        {data.personal.title && (
+          <p className="text-sm mt-0.5" style={{ color: VIOLET }}>
+            {data.personal.title}
+          </p>
+        )}
+        {contact.length > 0 && (
+          <p className="text-[11px] mt-1.5" style={{ color: DIM }}>
+            {contact.join("   •   ")}
+          </p>
+        )}
+      </div>
 
       {data.summary && (
         <div className="mt-4">

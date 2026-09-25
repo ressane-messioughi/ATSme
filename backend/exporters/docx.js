@@ -1,7 +1,37 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  ImageRun,
+  HeadingLevel,
+  HorizontalPositionAlign,
+  HorizontalPositionRelativeFrom,
+  VerticalPositionAlign,
+  VerticalPositionRelativeFrom,
+  TextWrappingType,
+  TextWrappingSide,
+} from "docx";
 import { styleFor } from "../templateStyles.js";
 
 const DIM = "5C5870";
+
+// Même logique que exporters/pdf.js : décode la data URI (déjà validée par
+// resumeModel.js) en Buffer. La bibliothèque docx ne sait embarquer que jpg/png/gif/bmp
+// (pas webp) : dans ce cas rare, la photo reste dans le PDF mais est simplement omise du
+// DOCX plutôt que de faire échouer tout l'export.
+function decodePhoto(photoUrl) {
+  if (!photoUrl) return null;
+  const match = /^data:image\/(png|jpe?g|webp);base64,(.+)$/.exec(photoUrl);
+  if (!match) return null;
+  const type = match[1] === "png" ? "png" : match[1] === "webp" ? null : "jpg";
+  if (!type) return null;
+  try {
+    return { buffer: Buffer.from(match[2], "base64"), type };
+  } catch {
+    return null;
+  }
+}
 
 function heading(text, style) {
   return new Paragraph({
@@ -20,6 +50,31 @@ export async function buildResumeDocx(data, template) {
   const style = { ...s, docxHeadingFont: s.headingFont.startsWith("Times") ? "Times New Roman" : "Arial" };
   const bodyFontName = style.bodyFont.startsWith("Times") ? "Times New Roman" : "Arial";
   const children = [];
+
+  // La photo flotte au-dessus du texte, ancrée au coin haut-droit de la page : elle ne
+  // s'insère dans aucun paragraphe de contenu et ne produit aucun texte extractible, donc
+  // ne modifie jamais l'ordre de lecture linéaire du document (cf. la même remarque dans
+  // exporters/pdf.js).
+  const photo = decodePhoto(data.personal.photoUrl);
+  if (photo) {
+    children.push(
+      new Paragraph({
+        children: [
+          new ImageRun({
+            type: photo.type,
+            data: photo.buffer,
+            transformation: { width: 72, height: 72 },
+            floating: {
+              horizontalPosition: { relative: HorizontalPositionRelativeFrom.PAGE, align: HorizontalPositionAlign.RIGHT },
+              verticalPosition: { relative: VerticalPositionRelativeFrom.PAGE, align: VerticalPositionAlign.TOP },
+              margins: { top: 360, right: 360 },
+              wrap: { type: TextWrappingType.SQUARE, side: TextWrappingSide.LEFT },
+            },
+          }),
+        ],
+      })
+    );
+  }
 
   children.push(
     new Paragraph({ children: [new TextRun({ text: data.personal.fullName || "Sans nom", bold: true, size: 40, font: bodyFontName })] })

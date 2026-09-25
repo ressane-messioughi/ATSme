@@ -23,7 +23,10 @@ export function rid(): string {
 }
 
 export type ResumeData = {
-  personal: { fullName: string; title: string; email: string; phone: string; location: string; links: Link[] };
+  // photoUrl est une data URI (image redimensionnée et compressée côté navigateur avant
+  // d'être enregistrée) : jamais un fichier séparé à héberger. Elle reste purement
+  // décorative dans les exports — voir la note dans CvEditor.tsx et exporters/pdf.js.
+  personal: { fullName: string; title: string; email: string; phone: string; location: string; links: Link[]; photoUrl?: string };
   summary: string;
   experiences: Experience[];
   education: Education[];
@@ -148,13 +151,19 @@ export function latestJobMatch(id: number | string) {
   );
 }
 
-export function exportUrl(id: number | string, format: "pdf" | "docx" | "txt") {
-  return `/api/resumes/${id}/export/${format}`;
+export function exportUrl(id: number | string, format: "pdf" | "docx" | "txt", options: { singlePage?: boolean } = {}) {
+  const query = options.singlePage ? "?singlePage=1" : "";
+  return `/api/resumes/${id}/export/${format}${query}`;
 }
 
-export async function downloadExport(id: number | string, format: "pdf" | "docx" | "txt", filename: string) {
+export async function downloadExport(
+  id: number | string,
+  format: "pdf" | "docx" | "txt",
+  filename: string,
+  options: { singlePage?: boolean } = {}
+) {
   const token = getToken();
-  const res = await fetch(exportUrl(id, format), {
+  const res = await fetch(exportUrl(id, format, options), {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
   if (!res.ok) throw new Error("échec de l'export");
@@ -171,7 +180,7 @@ export async function downloadExport(id: number | string, format: "pdf" | "docx"
 
 export function emptyResumeData(): ResumeData {
   return {
-    personal: { fullName: "", title: "", email: "", phone: "", location: "", links: [] },
+    personal: { fullName: "", title: "", email: "", phone: "", location: "", links: [], photoUrl: "" },
     summary: "",
     experiences: [],
     education: [],
