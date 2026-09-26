@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const fieldCls =
-  "w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text)] outline-none transition-all duration-150 placeholder:text-[var(--text-faint)] hover:border-[var(--text-faint)] focus:border-[var(--violet-soft)] focus:ring-[3px] focus:ring-[var(--violet-glow)]";
+  "field w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text)] outline-none transition-all duration-150 placeholder:text-[var(--text-faint)] hover:border-[var(--text-faint)] focus:border-[var(--violet-soft)]";
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement>;
 

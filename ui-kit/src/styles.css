@@ -13,3 +13,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "./tokens.css";
+
+/* Remplace focus-within:ring-[3px]/ring-[var(--violet-glow)] et group-hover:scale-105 :
+   ces utilitaires Tailwind arbitraires composent leur effet via des variables --tw-ring
+   et --tw-scale générées sous le sélecteur de la classe elle-même (jamais sous :root),
+   que le scanner de jetons de Claude Design signale sans qu'on puisse les annoter en
+   place sans casser leur usage réel ailleurs. CSS direct, même rendu, aucune variable
+   interne Tailwind générée pour ces deux effets. */
+.field:focus-within {
+  box-shadow: 0 0 0 3px var(--violet-glow);
+}
+.group:hover .zoom {
+  transform: scale(1.05);
+}

@@ -93,7 +93,7 @@ export function DashboardScreen({ resumes = sampleResumeList, userName = "Ressan
             onClick={() => onNavigate?.(a.to)}
             className={`${cardCls} group flex flex-col gap-2.5 p-4 text-left cursor-pointer hover:border-[var(--violet-soft)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_var(--violet-glow)]`}
           >
-            <span className="w-9 h-9 rounded-lg bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center group-hover:scale-105 transition-transform">
+            <span className="zoom w-9 h-9 rounded-lg bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center transition-transform">
               <a.icon className="w-[18px] h-[18px]" />
             </span>
             <span>

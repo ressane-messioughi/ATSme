@@ -33,7 +33,7 @@ export function TagsInput({ values, onChange, placeholder }: TagsInputProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-3 py-2.5 transition-all duration-150 hover:border-[var(--text-faint)] focus-within:border-[var(--violet-soft)] focus-within:ring-[3px] focus-within:ring-[var(--violet-glow)]">
+    <div className="field flex flex-wrap items-center gap-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-3 py-2.5 transition-all duration-150 hover:border-[var(--text-faint)] focus-within:border-[var(--violet-soft)]">
       {values.map((v, i) => (
         <Chip key={v + i} onRemove={() => onChange(values.filter((_, idx) => idx !== i))}>
           {v}
