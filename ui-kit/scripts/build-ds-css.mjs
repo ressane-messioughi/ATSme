@@ -48,9 +48,31 @@ function extractOne(name) {
 }
 
 const GROUPS = [
-  { kind: "other", vars: ["--ease-out", "--default-transition-duration", "--animate-pulse"] },
+  {
+    kind: "other",
+    vars: ["--ease-out", "--default-transition-duration", "--default-transition-timing-function", "--animate-pulse"],
+  },
   { kind: "font", vars: ["--ff-display", "--ff-body", "--ff-mono"] },
 ];
+
+// Ces --tw-* ont plusieurs valeurs DIFFÉRENTES dans le fichier compilé (chaque utilitaire
+// qui les touche les redéclare : --tw-scale-x vaut 105% sous hover:scale-105, 100% sous
+// scale-100, 1 dans le bloc de repli universel *, ::before, ::after, ::backdrop...) —
+// extractOne lèverait une ambiguïté. On fige donc la valeur neutre/par défaut de Tailwind
+// (celle du bloc de repli universel pour les 8 premières — vérifiée manuellement dans
+// dist/styles.ds.css ; --tw-outline-style: solid est le défaut documenté de Tailwind v4,
+// absent de ce bloc dans ce build précis faute d'utilitaire outline qui le déclenche).
+const HARDCODED_OTHER = {
+  "--tw-border-style": "solid",
+  "--tw-outline-style": "solid",
+  "--tw-duration": "initial",
+  "--tw-scale-x": "1",
+  "--tw-scale-y": "1",
+  "--tw-scale-z": "1",
+  "--tw-translate-x": "0",
+  "--tw-translate-y": "0",
+  "--tw-translate-z": "0",
+};
 
 const lines = ["", ":root {"];
 for (const { kind, vars } of GROUPS) {
@@ -59,9 +81,12 @@ for (const { kind, vars } of GROUPS) {
     lines.push(`  ${name}: ${value}; /* @kind ${kind} */`);
   }
 }
+for (const [name, value] of Object.entries(HARDCODED_OTHER)) {
+  lines.push(`  ${name}: ${value}; /* @kind other */`);
+}
 lines.push("}", "");
 css += lines.join("\n");
 
 writeFileSync(OUT, css);
-const total = GROUPS.reduce((n, g) => n + g.vars.length, 0);
+const total = GROUPS.reduce((n, g) => n + g.vars.length, 0) + Object.keys(HARDCODED_OTHER).length;
 console.log(`build-ds-css: ${OUT} écrit (${total} jeton(s) annoté(s) same-line, repli --tw-* conservé).`);
