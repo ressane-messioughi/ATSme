@@ -17,7 +17,7 @@
   "files": ["dist"],
   "sideEffects": ["**/*.css"],
   "scripts": {
-    "build": "tsup && tailwindcss -i src/styles.css -o dist/styles.css --minify",
+    "build": "tsup && tailwindcss -i src/styles.css -o dist/styles.css --minify && node scripts/build-ds-css.mjs",
     "dev": "tsup --watch"
   },
   "peerDependencies": {

@@ -7,6 +7,26 @@ synchronisation, extrait du code réel de l'app `frontend/`. L'app elle-même n'
 encore `@atsme/ui-kit` — les deux vivent en parallèle pour l'instant (voir "Risques de
 re-synchronisation" plus bas).
 
+## Avertissements de jetons CSS signalés par Claude Design (styles.css / _ds_bundle.css)
+
+Claude Design a signalé `--ease-out`, `--animate-pulse`, `--default-transition-duration`
+mal classés côté jetons, et le bruit des `--tw-*` de Tailwind. Ces fichiers sont écrasés à
+chaque sync depuis le code (pas éditables côté Design) — la correction se fait ici, via
+`ui-kit/scripts/build-ds-css.mjs` (nouveau, tourne en fin de `npm run build`, produit
+`dist/styles.ds.css` — c'est LUI que pointe `cfg.cssEntry`, pas `dist/styles.css` qui reste
+le vrai paquet npm inchangé) :
+- **Fait** : les 3 variables sont ré-émises en texte brut après coup avec
+  `/* @kind other */` au-dessus (Tailwind compile via Lightning CSS, qui retire tout
+  commentaire écrit dans le CSS source même sans `--minify` — l'annotation doit donc être
+  injectée après coup, jamais dans `src/styles.css`).
+- **Pas fait** : exclure les `--tw-*`. Tentative de retirer le bloc de repli
+  `@layer properties { @supports(...) {...} }` (qui semblait redondant avec les
+  `@property --tw-*` modernes) → a cassé 4 variables (`--tw-inset-shadow`,
+  `--tw-inset-ring-shadow`, `--tw-ring-offset-shadow`, `--tw-ring-offset-width`,
+  `[TOKENS_MISSING]` confirmé par `package-validate.mjs`) dont la composition
+  box-shadow/ring de Tailwind a besoin même sur des éléments qui ne les utilisent pas
+  explicitement. Annulé. Aucun mécanisme sûr trouvé pour ce point.
+
 ## BrandOrb exclue du paquet synchronisé
 
 `BrandOrb` (l'entité 3D de marque, `frontend/src/components/BrandOrb.tsx`) n'est **pas**

@@ -4,7 +4,7 @@
   "projectId": "57169e16-382d-4997-bd8c-3a0bf9c591ec",
   "shape": "package",
   "buildCmd": "cd ui-kit && npm run build",
-  "cssEntry": "dist/styles.css",
+  "cssEntry": "dist/styles.ds.css",
   "overrides": {
     "Modal": { "cardMode": "single", "viewport": "520x420" },
     "AppFrame": { "cardMode": "single", "viewport": "1100x700" },
