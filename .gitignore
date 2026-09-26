@@ -11,6 +11,16 @@ dist-ssr/
 # CV déposés par les utilisateurs - jamais dans le dépôt
 backend/storage/
 
+# Synchronisation Claude Design — scripts du convertisseur (regénérés à chaque sync),
+# bundle de sortie, et état machine (verdicts de notation, cache de rendu). Le dossier
+# .design-sync/ lui-même (config.json, NOTES.md, conventions.md, previews/) EST versionné
+# à l'exception de ces sous-dossiers.
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+
 # Logs
 logs
 *.log

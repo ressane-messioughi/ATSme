@@ -1,0 +1,50 @@
+/* Jetons de design ATSme. --violet/--violet-soft/--violet-glow portent la couleur
+   d'accent du thème actif (nommées d'après le thème d'origine, jamais renommées pour ne
+   pas casser tous les composants qui les référencent) ; --good/--warn/--danger sont
+   sémantiques et changent seulement de nuance d'un thème à l'autre, jamais de sens. */
+:root {
+  --bg: #0b0b10;
+  --surface: #131319;
+  --surface-2: #191922;
+  --border: #28283a;
+  --text: #eae8f2;
+  --text-dim: #a6a2ba;
+  --text-faint: #716d88;
+  --violet: #7c3aed;
+  --violet-soft: #9d7bfb;
+  --violet-glow: rgba(157, 123, 251, 0.16);
+  --good: #4ade95;
+  --warn: #f0b45e;
+  --danger: #f87171;
+  --ff-display: "Sora", system-ui, sans-serif;
+  --ff-body: "IBM Plex Sans", system-ui, sans-serif;
+  --ff-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+[data-theme="emerald"] {
+  --violet: #10b981;
+  --violet-soft: #34d399;
+  --violet-glow: rgba(52, 211, 153, 0.16);
+}
+
+[data-theme="amber"] {
+  --violet: #d97706;
+  --violet-soft: #fbbf24;
+  --violet-glow: rgba(251, 191, 36, 0.18);
+}
+
+[data-theme="light"] {
+  --bg: #f6f5fa;
+  --surface: #ffffff;
+  --surface-2: #f1eff8;
+  --border: #e3e0ef;
+  --text: #1c1a24;
+  --text-dim: #5c5870;
+  --text-faint: #8d89a3;
+  --violet: #7c3aed;
+  --violet-soft: #6d28d9;
+  --violet-glow: rgba(124, 58, 237, 0.1);
+  --good: #16a34a;
+  --warn: #b45309;
+  --danger: #dc2626;
+}

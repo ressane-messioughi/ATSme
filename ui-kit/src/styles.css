@@ -1,0 +1,15 @@
+/* Feuille de style du package : les composants s'écrivent avec des classes utilitaires
+   Tailwind (ex. bg-[var(--surface-2)]) — sans cette compilation, ces classes n'existent
+   dans aucune feuille de style et les composants rendent sans aucun style une fois sortis
+   du pipeline Tailwind de l'app ATSme elle-même. C'est ce fichier, compilé par la CLI
+   Tailwind (voir package.json "build"), qui rend le paquet stylé de façon autonome. */
+/* Les familles --ff-display/--ff-body/--ff-mono (Sora, IBM Plex Sans, IBM Plex Mono) ne
+   sont pas embarquées en @font-face : elles sont chargées à l'exécution depuis Google
+   Fonts, exactement comme le fait l'app ATSme elle-même (frontend/index.html). Sans cet
+   import, tout ce qui utilise ces jetons retombe silencieusement sur la police système.
+   Doit rester la toute première règle du fichier : un @import ailleurs qu'en tête (avant
+   même @import "tailwindcss") est invalide en CSS et se retrouve silencieusement ignoré
+   par le navigateur une fois le fichier optimisé. */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+@import "./tokens.css";

@@ -1,0 +1,40 @@
+{
+  "name": "@atsme/ui-kit",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Bibliothèque de composants partagée d'ATSme — champs, boutons, cartes, jauge de score.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": ["dist"],
+  "sideEffects": ["**/*.css"],
+  "scripts": {
+    "build": "tsup && tailwindcss -i src/styles.css -o dist/styles.css --minify",
+    "dev": "tsup --watch"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "framer-motion": "^13.4.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "tsup": "^8.3.5",
+    "typescript": "~6.0.2"
+  }
+}
