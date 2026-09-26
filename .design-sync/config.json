@@ -6,7 +6,16 @@
   "buildCmd": "cd ui-kit && npm run build",
   "cssEntry": "dist/styles.css",
   "overrides": {
-    "Modal": { "cardMode": "single", "viewport": "520x420" }
+    "Modal": { "cardMode": "single", "viewport": "520x420" },
+    "AppFrame": { "cardMode": "single", "viewport": "1100x700" },
+    "AdminFrame": { "cardMode": "single", "viewport": "1000x650" },
+    "AuthLayout": { "cardMode": "single", "viewport": "480x640" },
+    "LoginScreen": { "cardMode": "single", "viewport": "480x640" },
+    "RegisterScreen": { "cardMode": "single", "viewport": "480x700" },
+    "CvEditorScreen": { "cardMode": "single", "viewport": "1360x950" },
+    "AtsAnalysisScreen": { "cardMode": "single", "viewport": "1200x700" },
+    "SettingsScreen": { "cardMode": "single", "viewport": "760x1500" },
+    "TemplatesScreen": { "cardMode": "single", "viewport": "1300x750" }
   },
   "readmeHeader": ".design-sync/conventions.md"
 }
