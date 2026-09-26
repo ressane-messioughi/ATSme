@@ -87,6 +87,31 @@ for (const [name, value] of Object.entries(HARDCODED_OTHER)) {
 lines.push("}", "");
 css += lines.join("\n");
 
+// Copies générées par des classes Tailwind précises (border-dashed, duration-150,
+// duration-500, outline-none) : la déclaration vit SOUS le sélecteur de cette classe, pas
+// sous :root — la ré-émission ci-dessus ne les couvre pas. On annote la déclaration DANS
+// SA RÈGLE D'ORIGINE (in place, pas de doublon ailleurs) pour que l'annotation soit
+// attachée à la déclaration réellement utilisée par le composant. Lookahead pour rester
+// idempotent si le script tourne deux fois sur le même fichier.
+const IN_PLACE_OTHER = [
+  ["--tw-border-style", "dashed"],
+  ["--tw-duration", "150ms"],
+  ["--tw-duration", "500ms"],
+  ["--tw-outline-style", "none"],
+];
+let inPlaceCount = 0;
+for (const [name, value] of IN_PLACE_OTHER) {
+  const re = new RegExp(`${name}:\\s*${value};(?!\\s*/\\* @kind)`, "g");
+  const before = css;
+  css = css.replace(re, (m) => {
+    inPlaceCount++;
+    return `${m} /* @kind other */`;
+  });
+  if (css === before) {
+    throw new Error(`build-ds-css: "${name}: ${value};" introuvable dans ${OUT} — la classe Tailwind qui le génère a changé ? Script à ajuster.`);
+  }
+}
+
 writeFileSync(OUT, css);
-const total = GROUPS.reduce((n, g) => n + g.vars.length, 0) + Object.keys(HARDCODED_OTHER).length;
+const total = GROUPS.reduce((n, g) => n + g.vars.length, 0) + Object.keys(HARDCODED_OTHER).length + inPlaceCount;
 console.log(`build-ds-css: ${OUT} écrit (${total} jeton(s) annoté(s) same-line, repli --tw-* conservé).`);
