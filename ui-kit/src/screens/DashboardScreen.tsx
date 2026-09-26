@@ -91,7 +91,7 @@ export function DashboardScreen({ resumes = sampleResumeList, userName = "Ressan
             key={a.to}
             type="button"
             onClick={() => onNavigate?.(a.to)}
-            className={`${cardCls} group flex flex-col gap-2.5 p-4 text-left cursor-pointer hover:border-[var(--violet-soft)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_var(--violet-glow)]`}
+            className={`${cardCls} lift group flex flex-col gap-2.5 p-4 text-left cursor-pointer hover:border-[var(--violet-soft)]`}
           >
             <span className="zoom w-9 h-9 rounded-lg bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center transition-transform">
               <a.icon className="w-[18px] h-[18px]" />
@@ -139,7 +139,7 @@ export function DashboardScreen({ resumes = sampleResumeList, userName = "Ressan
                 key={r.id}
                 type="button"
                 onClick={() => onNavigate?.(`/cv/${r.id}`)}
-                className="flex items-center justify-between gap-3 px-2 py-2.5 rounded-lg hover:bg-[var(--surface-2)] hover:translate-x-0.5 transition-all text-left cursor-pointer"
+                className="nudge-x flex items-center justify-between gap-3 px-2 py-2.5 rounded-lg hover:bg-[var(--surface-2)] transition-all text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span

@@ -17,7 +17,7 @@ export function Card({ interactive = false, className = "", children, ...props }
   return (
     <div
       className={`bg-[var(--surface)] border border-[var(--border)] rounded-xl transition-colors duration-150 ${
-        interactive ? "hover:border-[var(--violet-soft)] hover:-translate-y-0.5" : ""
+        interactive ? "rise hover:border-[var(--violet-soft)]" : ""
       } ${className}`}
       {...props}
     >

@@ -26,3 +26,20 @@
 .group:hover .zoom {
   transform: scale(1.05);
 }
+
+/* Même raison : remplace hover:translate-x-0.5, hover:-translate-y-0.5 et
+   hover:shadow-[0_8px_20px_-8px_var(--violet-glow)] (composaient via des variables
+   --tw-translate/--tw-shadow générées sous leur propre sélecteur). CSS direct, mêmes
+   valeurs (0.5 sur l'échelle Tailwind = 2px). .rise n'a pas d'ombre : la carte d'origine
+   (Card.tsx, prop interactive) ne montait qu'en Y sans ombre — .lift, ombre incluse, est
+   réservé au cas où les deux effets étaient déjà combinés (DashboardScreen). */
+.nudge-x:hover {
+  transform: translateX(2px);
+}
+.rise:hover {
+  transform: translateY(-2px);
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -8px var(--violet-glow);
+}
