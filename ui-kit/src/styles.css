@@ -43,3 +43,11 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -8px var(--violet-glow);
 }
+
+/* Même raison : remplace disabled:active:scale-100 dans Button (composait via
+   --tw-scale-x/y générées sous son propre sélecteur). Le bouton actif rétrécit déjà à
+   0.97 via active:scale-[0.97] ; cette règle neutralise juste cet effet quand le bouton
+   est désactivé, sans variable Tailwind interne générée. */
+button:disabled:active {
+  scale: 1;
+}
