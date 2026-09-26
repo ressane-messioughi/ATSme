@@ -2,31 +2,28 @@
 // Produit dist/styles.ds.css : le CSS réservé au paquet uploadé par /design-sync
 // (cfg.cssEntry pointe ici, jamais vers dist/styles.css — le paquet npm réel).
 //
-// --ease-out, --animate-pulse et --default-transition-duration sont ré-émis en toute fin
-// de fichier avec un commentaire /* @kind other */ au-dessus de chacun, que le scanner de
-// jetons de Claude Design lit pour les classer correctement (au lieu de Tailwind
-// lui-même, qui les injecte sans commentaire et qu'on ne peut pas annoter à la source).
-// Valeurs extraites dynamiquement du CSS déjà compilé — jamais recopiées à la main — pour
-// rester justes si une mise à jour de Tailwind change les défauts.
+// Ré-émet en fin de fichier, en texte brut, une poignée de jetons avec une annotation
+// /* @kind ... */ sur la MÊME ligne, juste après le ";" — c'est le format que le scanner
+// de jetons de Claude Design exige (une annotation seule sur sa propre ligne ne compte
+// pas). Tailwind compile tout le CSS (imports compris, y compris nos propres fichiers
+// comme tokens.css) via Lightning CSS, qui retire TOUJOURS les commentaires ordinaires,
+// même sans --minify, même dans un fichier qu'on n'a pas généré nous-même — vérifié
+// empiriquement, y compris pour un commentaire déjà same-line dans la source. Aucune
+// annotation ne peut donc survivre si elle est écrite dans du CSS qui passe par la CLI
+// Tailwind ; le bloc doit être ajouté ici, après coup, sur le fichier déjà compilé.
 //
-// IMPORTANT : Tailwind traite tout le CSS (imports compris) via Lightning CSS, qui retire
-// les commentaires ordinaires même sans --minify — un /* @kind other */ écrit dans
-// src/styles.css ne survivrait donc pas à la compilation. Le bloc doit être ajouté ici, en
-// texte brut, APRÈS l'appel à la CLI Tailwind, jamais dans le CSS source.
+// Valeurs extraites dynamiquement du CSS déjà compilé (jamais recopiées à la main) pour
+// rester justes si une mise à jour de Tailwind ou de tokens.css change un défaut.
 //
-// Tentative abandonnée : retirer le bloc de repli @layer properties { @supports(...) }
-// (redéclaration des --tw-* en syntaxe "valeur:" pour les navigateurs pré-@property) pour
-// réduire le bruit --tw-* vu par le scanner de jetons. Semblait redondant avec les
-// @property --tw-* (qui n'ont pas de syntaxe "valeur:" et ne devraient donc pas être lus
-// comme des jetons) mais package-validate.mjs a détecté [TOKENS_MISSING] sur 4 variables
-// (--tw-inset-shadow, --tw-inset-ring-shadow, --tw-ring-offset-shadow,
-// --tw-ring-offset-width) une fois le bloc retiré : ces @property n'ont pas toutes une
-// initial-value, et le bloc de repli est en réalité ce qui fournit la valeur neutre
-// ("0 0 #0000" etc.) que la composition box-shadow/ring de Tailwind attend TOUJOURS en
-// entrée, même sur un élément qui n'utilise pas explicitement ces variantes. Le retirer
-// aurait pu casser silencieusement des ombres/anneaux sur des composants qui n'en
-// affichent pas dans leur preview capturée. Aucun mécanisme fiable trouvé pour exclure les
-// --tw-* du scanner de jetons de Claude Design sans ce risque — non traité ici.
+// Tentative abandonnée : exclure le bruit --tw-* du scanner de jetons de Claude Design.
+// Pas de levier dans .design-sync/config.json pour ça (CONFIG_KEYS de lib/common.mjs ne
+// contient rien de tel). Retirer le bloc de repli @layer properties { @supports(...) }
+// cassait la composition box-shadow/ring (TOKENS_MISSING confirmé). Les ~20 --tw-*
+// restants sous des sélecteurs de composants (ex. --tw-ring-shadow sous
+// focus-within:ring-[3px]) sont les déclarations mêmes qui font marcher ces utilitaires
+// sur les composants réels du kit — pas du bruit à retirer, du CSS fonctionnel utilisé.
+// Rien de sûr à faire ici ; c'est un filtre que seul Claude Design peut appliquer de son
+// côté sur les noms de variables.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -37,35 +34,34 @@ execFileSync("npx", ["tailwindcss", "-i", "src/styles.css", "-o", OUT], { stdio:
 
 let css = readFileSync(OUT, "utf8");
 
-// Extraction dynamique (pas de valeurs recopiées à la main) — chaque var doit apparaître
-// exactement une fois dans le thème par défaut de Tailwind avant qu'on ne l'annote.
-const KIND_OTHER_VARS = ["--ease-out", "--default-transition-duration", "--animate-pulse"];
-const values = {};
-for (const name of KIND_OTHER_VARS) {
+function extractOne(name) {
   const re = new RegExp(`(?<![\\w-])${name}\\s*:\\s*([^;]+);`, "g");
   const matches = [...css.matchAll(re)];
   if (matches.length === 0) {
-    throw new Error(`build-ds-css: "${name}" introuvable dans le thème Tailwind compilé — mise à jour de tailwindcss ? Script à ajuster.`);
+    throw new Error(`build-ds-css: "${name}" introuvable dans le CSS compilé — source/Tailwind a changé ? Script à ajuster.`);
   }
-  const distinct = new Set(matches.map((mm) => mm[1].trim()));
+  const distinct = new Set(matches.map((m) => m[1].trim()));
   if (distinct.size > 1) {
     throw new Error(`build-ds-css: "${name}" a plusieurs valeurs différentes (${[...distinct].join(" / ")}) — laquelle annoter ? Script à ajuster.`);
   }
-  values[name] = matches[0][1].trim();
+  return matches[0][1].trim();
 }
 
-const annotated = [
-  "",
-  "/* Ré-émission non layered des jetons Tailwind par défaut ci-dessus, annotés pour le",
-  "   scanner de jetons de Claude Design (voir le commentaire d'en-tête de ce script pour",
-  "   le pourquoi). Valeurs identiques à celles que Tailwind vient de générer plus haut —",
-  "   aucun changement de rendu. */",
-  ":root {",
-  ...KIND_OTHER_VARS.map((name) => `  /* @kind other */\n  ${name}: ${values[name]};`),
-  "}",
-  "",
-].join("\n");
-css += annotated;
+const GROUPS = [
+  { kind: "other", vars: ["--ease-out", "--default-transition-duration", "--animate-pulse"] },
+  { kind: "font", vars: ["--ff-display", "--ff-body", "--ff-mono"] },
+];
+
+const lines = ["", ":root {"];
+for (const { kind, vars } of GROUPS) {
+  for (const name of vars) {
+    const value = extractOne(name);
+    lines.push(`  ${name}: ${value}; /* @kind ${kind} */`);
+  }
+}
+lines.push("}", "");
+css += lines.join("\n");
 
 writeFileSync(OUT, css);
-console.log(`build-ds-css: ${OUT} écrit (${KIND_OTHER_VARS.length} jeton(s) annoté(s) @kind other, repli --tw-* conservé).`);
+const total = GROUPS.reduce((n, g) => n + g.vars.length, 0);
+console.log(`build-ds-css: ${OUT} écrit (${total} jeton(s) annoté(s) same-line, repli --tw-* conservé).`);
