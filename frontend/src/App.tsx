@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./lib/auth.tsx";
 import AppShell from "./components/AppShell.tsx";
+import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
@@ -19,14 +20,16 @@ import AdminResumes from "./pages/admin/AdminResumes.tsx";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return null;
-  if (!user) return <Navigate to="/connexion" replace />;
+  if (!user) return <Navigate to={location.pathname === "/" ? "/accueil" : "/connexion"} replace />;
   return <>{children}</>;
 }
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/accueil" element={<Landing />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/inscription" element={<Register />} />
       <Route
