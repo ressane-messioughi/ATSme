@@ -1,6 +1,6 @@
 import { scoreLabel, scoreTone } from "../lib/resumeApi";
 
-const TONE_COLOR = { good: "var(--good)", warn: "var(--warn)", danger: "var(--danger)" };
+const TONE_COLOR = { good: "var(--t-accent)", warn: "var(--t-warn)", danger: "var(--t-danger)" };
 
 export default function ScoreGauge({
   score,
@@ -24,7 +24,7 @@ export default function ScoreGauge({
     <div className="flex flex-col items-center">
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--surface-2)" strokeWidth={stroke} fill="none" />
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="var(--t-track)" strokeWidth={stroke} fill="none" />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -39,12 +39,13 @@ export default function ScoreGauge({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-[var(--ff-display)] font-bold" style={{ fontSize: size * 0.28, color: score != null ? color : "var(--text-faint)" }}>
+          <span
+            className="font-bold"
+            style={{ fontFamily: "var(--t-display)", fontSize: size * 0.28, color: score != null ? color : "var(--t-faint)" }}
+          >
             {score ?? "—"}
           </span>
-          <span className="text-[var(--text-faint)]" style={{ fontSize: size * 0.09 }}>
-            /100
-          </span>
+          <span style={{ color: "var(--t-faint)", fontSize: size * 0.09 }}>/100</span>
         </div>
       </div>
       {showLabel && (

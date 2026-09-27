@@ -11,6 +11,7 @@ const CRUMBS: Record<string, [string, string]> = {
   "/analyse": ["Optimiser", "Analyse ATS"],
   "/offres": ["Optimiser", "Offres d'emploi"],
   "/historique": ["Suivre", "Historique"],
+  "/abonnement": ["Compte", "Achats et abonnement"],
   "/parametres": ["Compte", "Paramètres"],
 };
 

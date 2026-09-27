@@ -10,6 +10,7 @@ import {
   IconPlusCircle,
   IconSettings,
   IconLayers,
+  IconStar,
 } from "./icons.tsx";
 
 const GROUPS: { title: string | null; items: { to: string; label: string; end?: boolean; icon: typeof IconDashboard }[] }[] = [
@@ -30,7 +31,13 @@ const GROUPS: { title: string | null; items: { to: string; label: string; end?: 
     ],
   },
   { title: "Suivre", items: [{ to: "/historique", label: "Historique", icon: IconHistory }] },
-  { title: "Compte", items: [{ to: "/parametres", label: "Paramètres", icon: IconSettings }] },
+  {
+    title: "Compte",
+    items: [
+      { to: "/abonnement", label: "Achats et abonnement", icon: IconStar },
+      { to: "/parametres", label: "Paramètres", icon: IconSettings },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -99,7 +106,7 @@ export default function Sidebar() {
           1 € par CV exporté
         </span>
         <NavLink
-          to="/parametres"
+          to="/abonnement"
           className="self-start text-[14px] font-semibold underline underline-offset-[3px]"
           style={{ color: "var(--t-accent)" }}
         >

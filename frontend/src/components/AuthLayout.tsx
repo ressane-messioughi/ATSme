@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { motion } from "framer-motion";
-import BrandOrb from "./BrandOrb.tsx";
+import CatLogo from "./CatLogo.tsx";
 
 export default function AuthLayout({
   title,
@@ -12,18 +11,27 @@ export default function AuthLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] grid place-items-center px-4">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} className="w-full max-w-sm">
-        <div className="flex items-center gap-2.5 justify-center mb-8">
-          <BrandOrb size={34} className="shrink-0 drop-shadow-[0_4px_14px_var(--violet-glow)]" />
-          <span className="font-[var(--ff-display)] font-bold text-lg tracking-tight">ATSme</span>
+    <div className="min-h-screen grid place-items-center px-5 py-10" style={{ background: "var(--t-bg)", color: "var(--t-ink)" }}>
+      <div style={{ width: "min(420px,100%)" }}>
+        <div className="flex items-center gap-2.5 mb-6">
+          <CatLogo size={52} />
+          <span className="sr-only">ATSme</span>
         </div>
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl px-7 py-8 shadow-xl">
-          <h1 className="text-xl font-bold mb-1.5">{title}</h1>
-          <p className="text-sm text-[var(--text-dim)] mb-7">{subtitle}</p>
+        <div
+          className="flex flex-col gap-4 p-[30px] rounded-[var(--t-r-lg)]"
+          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+        >
+          <div>
+            <h1 className="font-black text-[30px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+              {title}
+            </h1>
+            <p className="text-sm mt-1.5 mb-0" style={{ color: "var(--t-ink2)" }}>
+              {subtitle}
+            </p>
+          </div>
           {children}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

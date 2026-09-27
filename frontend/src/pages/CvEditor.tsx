@@ -50,8 +50,8 @@ const BREAKDOWN_LABELS: Record<keyof ScoreBreakdown, [string, number]> = {
   atsCompat: ["Format", 10],
 };
 
-const toneClass = { good: "text-[var(--good)]", warn: "text-[var(--warn)]", danger: "text-[var(--danger)]" };
-const barClass = { good: "bg-[var(--good)]", warn: "bg-[var(--warn)]", danger: "bg-[var(--danger)]" };
+const toneClass = { good: "text-[var(--t-accent)]", warn: "text-[var(--t-warn)]", danger: "text-[var(--t-danger)]" };
+const barClass = { good: "bg-[var(--t-accent)]", warn: "bg-[var(--t-warn)]", danger: "bg-[var(--t-danger)]" };
 
 function toneOf(value: number, max: number): "good" | "warn" | "danger" {
   const pct = value / max;
@@ -70,7 +70,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const tagsWrapCls =
-  "flex flex-wrap items-center gap-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-3 py-2.5 transition-all duration-150 hover:border-[var(--text-faint)] focus-within:border-[var(--violet-soft)] focus-within:ring-[3px] focus-within:ring-[var(--violet-glow)]";
+  "flex flex-wrap items-center gap-1.5 bg-[var(--t-field)] border border-[var(--t-line-soft)] rounded-xl px-3 py-2.5 transition-all duration-150 hover:border-[var(--t-faint)] focus-within:border-[var(--t-accent)] focus-within:ring-[3px] focus-within:ring-[var(--t-accent-soft)]";
 const tagsInputCls = "flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5";
 
 function TagsInput({ values, onChange, placeholder }: { values: string[]; onChange: (v: string[]) => void; placeholder: string }) {
@@ -183,12 +183,12 @@ function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (data
 
   return (
     <Field label="Photo (facultatif)">
-      <div className="flex items-center gap-4 p-3 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl">
+      <div className="flex items-center gap-4 p-3 bg-[var(--t-field)] border border-[var(--t-line-soft)] rounded-xl">
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={busy}
-          className="group relative shrink-0 w-20 h-20 rounded-full border-2 border-dashed border-[var(--border)] hover:border-[var(--violet-soft)] focus-visible:border-[var(--violet-soft)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--surface)] disabled:opacity-60"
+          className="group relative shrink-0 w-20 h-20 rounded-full border-2 border-dashed border-[var(--t-line-soft)] hover:border-[var(--t-accent)] focus-visible:border-[var(--t-accent)] transition-colors overflow-hidden grid place-items-center cursor-pointer bg-[var(--t-surface)] disabled:opacity-60"
         >
           {photoUrl ? (
             <>
@@ -198,7 +198,7 @@ function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (data
               </span>
             </>
           ) : (
-            <span className="text-[var(--text-faint)] group-hover:text-[var(--violet-soft)] transition-colors">
+            <span className="text-[var(--t-faint)] group-hover:text-[var(--t-accent)] transition-colors">
               <IconPlusCircle className="w-5 h-5" />
             </span>
           )}
@@ -209,20 +209,20 @@ function PhotoField({ photoUrl, onChange }: { photoUrl?: string; onChange: (data
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={busy}
-              className="text-xs font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer disabled:opacity-60"
+              className="text-xs font-medium text-[var(--t-accent)] hover:text-[var(--t-ink)] transition-colors cursor-pointer disabled:opacity-60"
             >
               {busy ? "Traitement..." : photoUrl ? "Changer la photo" : "Choisir une photo"}
             </button>
             {photoUrl && (
-              <button type="button" onClick={() => onChange("")} className="text-xs font-medium text-[var(--danger)] hover:opacity-80 transition-opacity cursor-pointer">
+              <button type="button" onClick={() => onChange("")} className="text-xs font-medium text-[var(--t-danger)] hover:opacity-80 transition-opacity cursor-pointer">
                 Retirer
               </button>
             )}
           </div>
-          <p className="text-[11px] leading-relaxed text-[var(--text-faint)] max-w-[280px]">
+          <p className="text-[11px] leading-relaxed text-[var(--t-faint)] max-w-[280px]">
             Purement décorative dans l'export : elle n'entre jamais dans le texte analysé, donc n'affecte pas votre score ATS.
           </p>
-          {error && <p className="text-[11px] text-[var(--danger)]">{error}</p>}
+          {error && <p className="text-[11px] text-[var(--t-danger)]">{error}</p>}
         </div>
         <input
           ref={inputRef}
@@ -249,23 +249,23 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 
 function ReorderButtons({ index, length, onMove }: { index: number; length: number; onMove: (dir: -1 | 1) => void }) {
   return (
-    <div className="flex flex-col rounded-lg border border-[var(--border)] overflow-hidden shrink-0">
+    <div className="flex flex-col rounded-lg border border-[var(--t-line-soft)] overflow-hidden shrink-0">
       <button
         type="button"
         disabled={index === 0}
         onClick={() => onMove(-1)}
         aria-label="Monter"
-        className="p-1 text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
+        className="p-1 text-[var(--t-faint)] hover:text-[var(--t-ink)] hover:bg-[var(--t-field)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
       >
         <IconChevronUp className="w-3.5 h-3.5" />
       </button>
-      <div className="h-px bg-[var(--border)]" />
+      <div className="h-px bg-[var(--t-line-soft)]" />
       <button
         type="button"
         disabled={index === length - 1}
         onClick={() => onMove(1)}
         aria-label="Descendre"
-        className="p-1 text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
+        className="p-1 text-[var(--t-faint)] hover:text-[var(--t-ink)] hover:bg-[var(--t-field)] disabled:opacity-25 cursor-pointer disabled:cursor-default transition-colors"
       >
         <IconChevronDown className="w-3.5 h-3.5" />
       </button>
@@ -396,31 +396,31 @@ export default function CvEditor() {
     setData((d) => ({ ...d, personal: { ...d.personal, [key]: value } }));
   }
 
-  if (error && !resume) return <p className="text-sm text-[var(--danger)]">{error}</p>;
+  if (error && !resume) return <p className="text-sm text-[var(--t-danger)]">{error}</p>;
   if (!resume) return null;
 
   return (
     <div className="max-w-[1400px]">
       <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <div className="flex-1 min-w-[240px]">
-          <button onClick={() => navigate("/cv")} className="flex items-center gap-1 text-xs font-[var(--ff-mono)] text-[var(--text-faint)] hover:text-[var(--text)] mb-2 cursor-pointer transition-colors">
+          <button onClick={() => navigate("/cv")} className="flex items-center gap-1 text-xs font-[var(--t-mono)] text-[var(--t-faint)] hover:text-[var(--t-ink)] mb-2 cursor-pointer transition-colors">
             <span aria-hidden="true">←</span> Mes CV
           </button>
           <div className="flex items-center gap-3">
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-xl font-bold bg-transparent outline-none rounded-md -mx-1.5 px-1.5 py-0.5 transition-colors focus:bg-[var(--surface-2)]"
+              className="text-xl font-bold bg-transparent outline-none rounded-md -mx-1.5 px-1.5 py-0.5 transition-colors focus:bg-[var(--t-field)]"
             />
-            <span className="flex items-center gap-1.5 text-xs text-[var(--text-faint)] font-[var(--ff-mono)]">
+            <span className="flex items-center gap-1.5 text-xs text-[var(--t-faint)] font-[var(--t-mono)]">
               {saveState === "saving" && (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--warn)] animate-pulse" /> Enregistrement...
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--t-warn)] animate-pulse" /> Enregistrement...
                 </>
               )}
               {saveState === "saved" && (
                 <>
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--good)]" /> Enregistré
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--t-accent)]" /> Enregistré
                 </>
               )}
             </span>
@@ -429,7 +429,7 @@ export default function CvEditor() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowPreview((v) => !v)}
-            className="lg:hidden text-xs font-[var(--ff-mono)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[var(--text-dim)] hover:border-[var(--violet-soft)] transition-colors cursor-pointer"
+            className="lg:hidden text-xs font-[var(--t-mono)] border border-[var(--t-line-soft)] rounded-lg px-3 py-2.5 text-[var(--t-ink2)] hover:border-[var(--t-accent)] transition-colors cursor-pointer"
           >
             {showPreview ? "Éditeur" : "Aperçu"}
           </button>
@@ -442,20 +442,20 @@ export default function CvEditor() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
+      {error && <p className="text-sm text-[var(--t-danger)] mb-4">{error}</p>}
 
-      <div className="relative flex gap-1 border-b border-[var(--border)] mb-6 overflow-x-auto">
+      <div className="relative flex gap-1 border-b border-[var(--t-line-soft)] mb-6 overflow-x-auto">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`relative px-3.5 py-2.5 text-sm whitespace-nowrap transition-colors cursor-pointer ${
-              tab === t.key ? "text-[var(--text)] font-medium" : "text-[var(--text-faint)] hover:text-[var(--text-dim)]"
+              tab === t.key ? "text-[var(--t-ink)] font-medium" : "text-[var(--t-faint)] hover:text-[var(--t-ink2)]"
             }`}
           >
             {t.label}
             {tab === t.key && (
-              <motion.span layoutId="cv-editor-tab-underline" className="absolute left-0 right-0 -bottom-px h-0.5 bg-[var(--violet)] rounded-full" transition={{ type: "spring", stiffness: 500, damping: 40 }} />
+              <motion.span layoutId="cv-editor-tab-underline" className="absolute left-0 right-0 -bottom-px h-0.5 bg-[var(--t-accent)] rounded-full" transition={{ type: "spring", stiffness: 500, damping: 40 }} />
             )}
           </button>
         ))}
@@ -545,14 +545,14 @@ export default function CvEditor() {
         </div>
 
         <div className="flex flex-col gap-5">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-            <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-4 text-center">Score ATS</p>
+          <div className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] rounded-xl p-5">
+            <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)] mb-4 text-center">Score ATS</p>
             <div className="flex justify-center mb-5">
               <ScoreGauge score={score} size={110} />
             </div>
             {breakdown && (
               <div className="flex flex-col gap-3.5">
-                <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] -mb-1">Détails de l'analyse</p>
+                <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)] -mb-1">Détails de l'analyse</p>
                 {(Object.keys(BREAKDOWN_LABELS) as (keyof ScoreBreakdown)[]).map((key) => {
                   const [label, max] = BREAKDOWN_LABELS[key];
                   const value = breakdown[key] ?? 0;
@@ -560,12 +560,12 @@ export default function CvEditor() {
                   return (
                     <div key={key} className="flex flex-col gap-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-[var(--text-dim)]">{label}</span>
-                        <span className={`font-[var(--ff-mono)] font-medium ${toneClass[tone]}`}>
+                        <span className="text-[var(--t-ink2)]">{label}</span>
+                        <span className={`font-[var(--t-mono)] font-medium ${toneClass[tone]}`}>
                           {value}/{max}
                         </span>
                       </div>
-                      <div className="h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[var(--t-field)] rounded-full overflow-hidden">
                         <motion.div
                           className={`h-full rounded-full ${barClass[tone]}`}
                           initial={{ width: 0 }}
@@ -581,11 +581,11 @@ export default function CvEditor() {
           </div>
 
           {recommendations.length > 0 && (
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-              <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-3">Recommandations</p>
+            <div className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] rounded-xl p-5">
+              <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)] mb-3">Recommandations</p>
               <div className="flex flex-col gap-3.5">
                 {recommendations.map((r, i) => (
-                  <div key={i} className="rounded-lg bg-[var(--warn)]/8 border border-[var(--warn)]/20 p-3">
+                  <div key={i} className="rounded-lg bg-[var(--t-warn)]/8 border border-[var(--t-warn)]/20 p-3">
                     <p className="text-sm font-medium mb-1.5">{r.issue}</p>
                     <p className={`text-xs leading-relaxed ${toneClass.good}`}>→ {r.fix}</p>
                   </div>
@@ -594,25 +594,25 @@ export default function CvEditor() {
             </div>
           )}
 
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
+          <div className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)]">Versions</p>
-              <button onClick={onSaveVersion} className="flex items-center gap-1 text-xs font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer">
+              <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)]">Versions</p>
+              <button onClick={onSaveVersion} className="flex items-center gap-1 text-xs font-medium text-[var(--t-accent)] hover:text-[var(--t-ink)] transition-colors cursor-pointer">
                 <IconPlusCircle className="w-3.5 h-3.5" /> Nouvelle
               </button>
             </div>
-            {versions.length === 0 && <p className="text-xs text-[var(--text-faint)]">Aucune version enregistrée.</p>}
+            {versions.length === 0 && <p className="text-xs text-[var(--t-faint)]">Aucune version enregistrée.</p>}
             <div className="flex flex-col gap-1 -mx-2">
               {versions.map((v) => (
-                <div key={v.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--surface-2)] transition-colors">
-                  <span className="text-[var(--text-dim)] truncate pr-2">
+                <div key={v.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--t-field)] transition-colors">
+                  <span className="text-[var(--t-ink2)] truncate pr-2">
                     {v.label || new Date(v.created_at).toLocaleDateString("fr-FR")} · {v.ats_score ?? "—"}/100
                   </span>
                   <span className="flex items-center gap-2.5 shrink-0">
-                    <button onClick={() => onRestore(v.id)} className="font-medium text-[var(--violet-soft)] hover:text-[var(--text)] transition-colors cursor-pointer">
+                    <button onClick={() => onRestore(v.id)} className="font-medium text-[var(--t-accent)] hover:text-[var(--t-ink)] transition-colors cursor-pointer">
                       Restaurer
                     </button>
-                    <button onClick={() => onDuplicateVersion(v.id)} className="text-[var(--text-faint)] hover:text-[var(--text-dim)] transition-colors cursor-pointer">
+                    <button onClick={() => onDuplicateVersion(v.id)} className="text-[var(--t-faint)] hover:text-[var(--t-ink2)] transition-colors cursor-pointer">
                       Dupliquer
                     </button>
                   </span>
@@ -621,8 +621,8 @@ export default function CvEditor() {
             </div>
           </div>
 
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-            <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-3">Matching offre d'emploi</p>
+          <div className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] rounded-xl p-5">
+            <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)] mb-3">Matching offre d'emploi</p>
             <textarea
               className={`${inputCls} min-h-[80px] resize-y mb-3`}
               placeholder="Collez le texte de l'offre ici..."
@@ -635,15 +635,15 @@ export default function CvEditor() {
             {matchResult && (
               <div>
                 <div className="flex items-baseline gap-2 mb-2.5">
-                  <p className="font-[var(--ff-mono)] text-2xl font-bold">{matchResult.score}%</p>
-                  <p className="text-xs text-[var(--text-faint)]">de correspondance</p>
+                  <p className="font-[var(--t-mono)] text-2xl font-bold">{matchResult.score}%</p>
+                  <p className="text-xs text-[var(--t-faint)]">de correspondance</p>
                 </div>
                 {matchResult.missing.length > 0 && (
                   <>
                     <p className={`${labelCls} mb-1.5`}>Mots-clés manquants</p>
                     <div className="flex flex-wrap gap-1.5">
                       {matchResult.missing.slice(0, 8).map((k) => (
-                        <span key={k} className="text-xs bg-[var(--danger)]/10 border border-[var(--danger)]/25 text-[var(--danger)] rounded-full px-2 py-0.5">
+                        <span key={k} className="text-xs bg-[var(--t-danger)]/10 border border-[var(--t-danger)]/25 text-[var(--t-danger)] rounded-full px-2 py-0.5">
                           {k}
                         </span>
                       ))}
@@ -702,7 +702,7 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 max-w-3xl w-full grid md:grid-cols-[1fr_260px] gap-6 max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-[var(--t-bg)] border border-[var(--t-line-soft)] rounded-2xl p-6 max-w-3xl w-full grid md:grid-cols-[1fr_260px] gap-6 max-h-[85vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div>
@@ -711,31 +711,31 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
             <button
               onClick={onClose}
               aria-label="Fermer"
-              className="grid place-items-center w-7 h-7 rounded-full text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer text-xl leading-none"
+              className="grid place-items-center w-7 h-7 rounded-full text-[var(--t-faint)] hover:text-[var(--t-ink)] hover:bg-[var(--t-field)] transition-colors cursor-pointer text-xl leading-none"
             >
               ×
             </button>
           </div>
-          <p className="text-sm text-[var(--text-dim)] mb-5">Choisissez le format qui vous convient le mieux.</p>
+          <p className="text-sm text-[var(--t-ink2)] mb-5">Choisissez le format qui vous convient le mieux.</p>
           <div className="flex flex-col gap-2.5 mb-5">
             {options.map((o) => (
               <button
                 key={o.value}
                 onClick={() => setFormat(o.value)}
                 className={`flex items-start gap-3 text-left border rounded-xl px-4 py-3 transition-all duration-150 cursor-pointer ${
-                  format === o.value ? "border-[var(--violet-soft)] bg-[var(--violet-glow)]" : "border-[var(--border)] hover:border-[var(--text-faint)]"
+                  format === o.value ? "border-[var(--t-accent)] bg-[var(--t-accent-soft)]" : "border-[var(--t-line-soft)] hover:border-[var(--t-faint)]"
                 }`}
               >
                 <span
                   className={`mt-0.5 shrink-0 w-4 h-4 rounded-full border-2 grid place-items-center transition-colors ${
-                    format === o.value ? "border-[var(--violet-soft)]" : "border-[var(--border)]"
+                    format === o.value ? "border-[var(--t-accent)]" : "border-[var(--t-line-soft)]"
                   }`}
                 >
-                  {format === o.value && <span className="w-2 h-2 rounded-full bg-[var(--violet-soft)]" />}
+                  {format === o.value && <span className="w-2 h-2 rounded-full bg-[var(--t-accent)]" />}
                 </span>
                 <span>
                   <p className="text-sm font-medium mb-0.5">{o.label}</p>
-                  <p className="text-xs text-[var(--text-dim)]">{o.desc}</p>
+                  <p className="text-xs text-[var(--t-ink2)]">{o.desc}</p>
                 </span>
               </button>
             ))}
@@ -747,11 +747,11 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
                 type="checkbox"
                 checked={singlePage}
                 onChange={(e) => setSinglePage(e.target.checked)}
-                className="mt-0.5 accent-[var(--violet)] cursor-pointer"
+                className="mt-0.5 accent-[var(--t-accent)] cursor-pointer"
               />
               <span>
                 <span className="text-sm block">Format compact — tient sur une seule page</span>
-                <span className="text-xs text-[var(--text-dim)] block mt-0.5">
+                <span className="text-xs text-[var(--t-ink2)] block mt-0.5">
                   Réduit légèrement les tailles de police et les marges si besoin. N'affecte ni votre contenu, ni votre score ATS.
                 </span>
               </span>
@@ -763,8 +763,8 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
           </button>
         </div>
         <div className="hidden md:block">
-          <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-2">Aperçu</p>
-          <div className="scale-[0.85] origin-top-left w-[118%] rounded-lg overflow-hidden ring-1 ring-[var(--border)]">
+          <p className="text-xs font-[var(--t-mono)] uppercase tracking-widest text-[var(--t-faint)] mb-2">Aperçu</p>
+          <div className="scale-[0.85] origin-top-left w-[118%] rounded-lg overflow-hidden ring-1 ring-[var(--t-line-soft)]">
             <CvPreview data={data} />
           </div>
         </div>
@@ -786,10 +786,10 @@ function ExperienceList({ experiences, onChange }: { experiences: Experience[]; 
   return (
     <div className="flex flex-col gap-4">
       {experiences.map((exp, i) => (
-        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4">
+        <div key={i} className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] hover:border-[var(--t-faint)] transition-colors rounded-xl p-4">
           <div className="flex justify-between items-center mb-3.5">
             <div className="flex items-center gap-2.5">
-              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] text-[10px] font-[var(--ff-mono)] font-bold">
+              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--t-accent-soft)] text-[var(--t-accent)] text-[10px] font-[var(--t-mono)] font-bold">
                 {i + 1}
               </span>
               <ReorderButtons index={i} length={experiences.length} onMove={(dir) => onChange(move(experiences, i, i + dir))} />
@@ -797,7 +797,7 @@ function ExperienceList({ experiences, onChange }: { experiences: Experience[]; 
             <button
               onClick={() => remove(i)}
               aria-label="Supprimer cette expérience"
-              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer"
+              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--t-faint)] hover:text-[var(--t-danger)] hover:bg-[var(--t-danger)]/10 transition-colors cursor-pointer"
             >
               <IconTrash className="w-4 h-4" />
             </button>
@@ -851,7 +851,7 @@ function EducationList({ education, onChange }: { education: Education[]; onChan
   return (
     <div className="flex flex-col gap-3.5">
       {education.map((ed, i) => (
-        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4 flex gap-3.5">
+        <div key={i} className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] hover:border-[var(--t-faint)] transition-colors rounded-xl p-4 flex gap-3.5">
           <ReorderButtons index={i} length={education.length} onMove={(dir) => onChange(move(education, i, i + dir))} />
           <div className="flex-1 grid sm:grid-cols-3 gap-3.5">
             <Field label="Diplôme">
@@ -867,7 +867,7 @@ function EducationList({ education, onChange }: { education: Education[]; onChan
               <button
                 onClick={() => remove(i)}
                 aria-label="Supprimer cette formation"
-                className="grid place-items-center w-9 h-9 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer shrink-0"
+                className="grid place-items-center w-9 h-9 rounded-lg text-[var(--t-faint)] hover:text-[var(--t-danger)] hover:bg-[var(--t-danger)]/10 transition-colors cursor-pointer shrink-0"
               >
                 <IconTrash className="w-4 h-4" />
               </button>
@@ -895,10 +895,10 @@ function ProjectList({ projects, onChange }: { projects: Project[]; onChange: (v
   return (
     <div className="flex flex-col gap-3.5">
       {projects.map((p, i) => (
-        <div key={i} className="bg-[var(--surface)] border border-[var(--border)] hover:border-[var(--text-faint)] transition-colors rounded-xl p-4">
+        <div key={i} className="bg-[var(--t-surface)] border border-[var(--t-line-soft)] hover:border-[var(--t-faint)] transition-colors rounded-xl p-4">
           <div className="flex justify-between items-center mb-3.5">
             <div className="flex items-center gap-2.5">
-              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] text-[10px] font-[var(--ff-mono)] font-bold">
+              <span className="grid place-items-center w-5 h-5 rounded-full bg-[var(--t-accent-soft)] text-[var(--t-accent)] text-[10px] font-[var(--t-mono)] font-bold">
                 {i + 1}
               </span>
               <ReorderButtons index={i} length={projects.length} onMove={(dir) => onChange(move(projects, i, i + dir))} />
@@ -906,7 +906,7 @@ function ProjectList({ projects, onChange }: { projects: Project[]; onChange: (v
             <button
               onClick={() => remove(i)}
               aria-label="Supprimer ce projet"
-              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors cursor-pointer"
+              className="grid place-items-center w-7 h-7 rounded-lg text-[var(--t-faint)] hover:text-[var(--t-danger)] hover:bg-[var(--t-danger)]/10 transition-colors cursor-pointer"
             >
               <IconTrash className="w-4 h-4" />
             </button>

@@ -14,7 +14,7 @@ const TEMPLATES: { value: string; label: string; category: (typeof CATEGORIES)[n
 
 function TemplateThumb({ accent, base }: { accent: string; base: string }) {
   return (
-    <div className="rounded-lg overflow-hidden border border-[var(--border)]" style={{ background: base, aspectRatio: "3/4" }}>
+    <div className="rounded-[var(--t-r-md)] overflow-hidden" style={{ background: base, aspectRatio: "3/4", border: "1px solid var(--t-line-soft)" }}>
       <div className="p-3 flex flex-col gap-2 h-full">
         <div className="h-2 w-2/3 rounded" style={{ background: accent }} />
         <div className="h-1.5 w-1/3 rounded bg-white/15" />
@@ -43,7 +43,9 @@ export default function Templates() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    listResumes().then(setResumes).catch(() => {});
+    listResumes()
+      .then(setResumes)
+      .catch(() => {});
   }, []);
 
   const filtered = category === "Tous" ? TEMPLATES : TEMPLATES.filter((t) => t.category === category);
@@ -58,7 +60,7 @@ export default function Templates() {
     setApplying(value);
     try {
       await updateResume(targetId, { template: value });
-      setMessage(`Modèle appliqué à "${resumes?.find((r) => String(r.id) === targetId)?.title}".`);
+      setMessage(`Modèle appliqué à « ${resumes?.find((r) => String(r.id) === targetId)?.title} ».`);
     } catch {
       setMessage("Impossible d'appliquer ce modèle.");
     } finally {
@@ -67,48 +69,77 @@ export default function Templates() {
   }
 
   return (
-    <div className="max-w-6xl">
-      <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Templates</h1>
-          <p className="text-[var(--text-dim)] text-sm mt-1">Choisissez un modèle et personnalisez-le selon votre profil.</p>
+    <div className="max-w-[1080px] mx-auto flex flex-col gap-7">
+      <header className="flex flex-wrap items-end justify-between gap-3.5">
+        <div className="flex flex-col gap-1.5">
+          <div className="font-semibold text-xs uppercase" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}>
+            Créer
+          </div>
+          <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+            Choisissez une mise en page
+          </h1>
+          <p className="m-0 text-[15px]" style={{ color: "var(--t-ink2)" }}>
+            Tous les modèles sont lisibles par les logiciels de recrutement.
+          </p>
         </div>
         {resumes && resumes.length > 0 && (
-          <select value={targetId} onChange={(e) => setTargetId(e.target.value)} className="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--violet-soft)]">
-            <option value="">Appliquer à un nouveau CV</option>
-            {resumes.map((r) => (
-              <option key={r.id} value={r.id}>
-                Appliquer à « {r.title} »
-              </option>
-            ))}
-          </select>
+          <label className="flex flex-col gap-1.5 font-semibold text-sm" style={{ color: "var(--t-ink)" }}>
+            Appliquer à un CV existant
+            <select
+              value={targetId}
+              onChange={(e) => setTargetId(e.target.value)}
+              className="min-h-11 px-3 rounded-[var(--t-r-md)] outline-none"
+              style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-field)", color: "var(--t-ink)" }}
+            >
+              <option value="">Nouveau CV</option>
+              {resumes.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.title}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
-      </div>
+      </header>
 
-      {message && <p className="text-sm text-[var(--violet-soft)] mb-4">{message}</p>}
+      {message && (
+        <p role="status" className="text-sm m-0" style={{ color: "var(--t-accent)" }}>
+          {message}
+        </p>
+      )}
 
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div role="radiogroup" aria-label="Catégories" className="flex gap-2 flex-wrap">
         {CATEGORIES.map((c) => (
           <button
             key={c}
+            type="button"
+            role="radio"
+            aria-checked={category === c}
             onClick={() => setCategory(c)}
-            className={`text-xs font-medium rounded-full px-3.5 py-1.5 transition-colors cursor-pointer ${
-              category === c ? "bg-[var(--violet)] text-white" : "bg-[var(--surface-2)] text-[var(--text-dim)] hover:text-[var(--text)]"
-            }`}
+            className="min-h-[38px] px-3.5 rounded-[var(--t-r-md)] font-semibold text-sm cursor-pointer"
+            style={
+              category === c
+                ? { background: "var(--t-surface)", color: "var(--t-ink)", boxShadow: "0 1px 2px rgba(0,0,0,.12)" }
+                : { background: "transparent", color: "var(--t-ink2)" }
+            }
           >
             {c}
           </button>
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div role="radiogroup" aria-label="Modèles" className="grid gap-[18px]" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}>
         {filtered.map((t) => (
           <div key={t.value} className="flex flex-col gap-2">
             <TemplateThumb accent={t.accent} base={t.base} />
             <button
+              type="button"
+              role="radio"
+              aria-checked={false}
               onClick={() => apply(t.value)}
               disabled={applying === t.value}
-              className="text-xs font-[var(--ff-mono)] uppercase tracking-wider border border-[var(--border)] hover:border-[var(--violet-soft)] rounded-lg py-2 transition-colors disabled:opacity-60 cursor-pointer"
+              className="min-h-11 rounded-[var(--t-r-md)] font-semibold text-sm cursor-pointer disabled:opacity-60"
+              style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-surface)", color: "var(--t-ink)" }}
             >
               {applying === t.value ? "..." : t.label}
             </button>

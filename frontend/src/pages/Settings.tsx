@@ -2,15 +2,24 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useAuth } from "../lib/auth.tsx";
 import { api, ApiError } from "../lib/api.ts";
 import { listResumes } from "../lib/resumeApi";
-import { THEMES, useTheme } from "../lib/theme.ts";
-import { btnPrimaryCls, btnSecondaryCls, cardCls, inputCls, labelCls } from "../lib/ui.ts";
+import { THEME3D_META, useTheme3D, type Theme3DId } from "../lib/theme3d.ts";
 
 const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", premium: "Premium", entreprise: "Entreprise" };
 const PLAN_LIMITS: Record<string, number> = { free: 5, pro: 30, premium: 100, entreprise: Infinity };
 
+const THEME_DESCRIPTIONS: Record<Theme3DId, string> = {
+  ghibli: "Papier crème, vert mousse, contours dessinés",
+  cyber: "Nuit violette, néons magenta et jaune",
+  tech: "Gris ardoise, bleu électrique, sobre",
+  vinyle: "Noir profond, vert vif, formes pilule",
+};
+
+const sectionStyle = { background: "var(--t-surface)", border: "1px solid var(--t-line-soft)", borderRadius: "var(--t-r-lg)" };
+const fieldStyle = { border: "1.5px solid var(--t-field-line)", background: "var(--t-field)", color: "var(--t-ink)" };
+
 export default function Settings() {
   const { user, refreshUser } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme3D();
   const [name, setName] = useState(user?.name || "");
   const [nameState, setNameState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
@@ -65,92 +74,139 @@ export default function Settings() {
   const pct = resumeCount != null && limit !== Infinity ? Math.min(100, (resumeCount / limit) * 100) : 0;
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Paramètres</h1>
+    <div className="max-w-[1080px] mx-auto flex flex-col gap-7">
+      <header className="flex flex-col gap-1.5">
+        <div className="font-semibold text-xs uppercase" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}>
+          Compte
+        </div>
+        <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+          Paramètres
+        </h1>
+      </header>
 
-      <div className="flex flex-col gap-6">
-        <div className={`${cardCls} p-5`}>
-          <p className={`${labelCls} mb-4`}>Apparence</p>
-          <p className="text-sm text-[var(--text-dim)] mb-4">Choisissez le thème qui vous convient le mieux — appliqué immédiatement, à tout l'espace de travail.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {THEMES.map((t) => (
+      <section aria-labelledby="theme-h" className="p-[22px] flex flex-col gap-3.5" style={sectionStyle}>
+        <h2 id="theme-h" className="font-black text-[22px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Thème
+        </h2>
+        <div role="radiogroup" aria-label="Thème de l'interface" className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}>
+          {THEME3D_META.map((t) => {
+            const active = theme === t.id;
+            return (
               <button
                 key={t.id}
                 type="button"
+                role="radio"
+                aria-checked={active}
                 onClick={() => setTheme(t.id)}
-                aria-pressed={theme === t.id}
-                className={`text-left rounded-xl border-2 p-3 transition-all duration-150 cursor-pointer ${
-                  theme === t.id ? "border-[var(--violet-soft)]" : "border-[var(--border)] hover:border-[var(--text-faint)]"
-                }`}
+                className="min-h-11 flex flex-col gap-2.5 p-3 rounded-[var(--t-r-md)] text-left cursor-pointer"
+                style={
+                  active
+                    ? { border: "1.5px solid var(--t-accent)", background: "var(--t-accent-soft)", color: "var(--t-ink)" }
+                    : { border: "1.5px solid var(--t-line-soft)", background: "var(--t-field)", color: "var(--t-ink)" }
+                }
               >
-                <span className="flex h-9 rounded-lg overflow-hidden mb-2.5 ring-1 ring-[var(--border)]">
-                  {t.swatch.map((c, i) => (
-                    <span key={i} className="flex-1" style={{ background: c }} />
-                  ))}
+                <span className="h-[54px] rounded-[var(--t-r-md)]" style={{ background: t.swatch, border: "1.5px solid var(--t-line)" }} />
+                <span className="font-bold text-[15px]">{t.label}</span>
+                <span className="text-[13px]" style={{ color: "var(--t-muted)" }}>
+                  {THEME_DESCRIPTIONS[t.id]}
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium">{t.label}</span>
-                  {theme === t.id && <span className="w-1.5 h-1.5 rounded-full bg-[var(--violet-soft)]" />}
-                </span>
-                <span className="text-[11px] text-[var(--text-faint)] leading-snug block mt-0.5">{t.description}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </section>
 
-        <div className={`${cardCls} p-5`}>
-          <p className={`${labelCls} mb-4`}>Profil</p>
-          <form onSubmit={onSaveName} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Email</span>
-              <input className={inputCls} value={user?.email || ""} disabled />
+      <section aria-labelledby="profile-h" className="p-[22px] flex flex-col gap-3.5" style={sectionStyle}>
+        <h2 id="profile-h" className="font-black text-[22px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Profil
+        </h2>
+        <form onSubmit={onSaveName} className="flex flex-col gap-4">
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+            <label className="flex flex-col gap-1.5 font-semibold text-[13px]" style={{ color: "var(--t-ink2)" }}>
+              Email
+              <input value={user?.email || ""} disabled className="min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] outline-none opacity-70" style={fieldStyle} />
             </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Nom</span>
-              <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
+            <label className="flex flex-col gap-1.5 font-semibold text-[13px]" style={{ color: "var(--t-ink2)" }}>
+              Nom
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] outline-none"
+                style={fieldStyle}
+              />
             </label>
-            <button type="submit" disabled={nameState === "saving" || !name.trim()} className={`${btnPrimaryCls} self-start`}>
-              {nameState === "saving" ? "Enregistrement..." : nameState === "saved" ? "✓ Enregistré" : "Enregistrer"}
-            </button>
-            {nameState === "error" && <p className="text-sm text-[var(--danger)]">Échec de l'enregistrement.</p>}
-          </form>
-        </div>
-
-        <div className={`${cardCls} p-5`}>
-          <p className={`${labelCls} mb-4`}>Offre</p>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">{PLAN_LABELS[plan] || plan}</span>
-            <span className="text-xs font-[var(--ff-mono)] text-[var(--text-dim)]">
-              {resumeCount ?? "—"} / {limit === Infinity ? "∞" : limit} CV
-            </span>
           </div>
-          <div className="h-1.5 bg-[var(--surface-2)] rounded-full overflow-hidden">
-            <div className="h-full bg-[var(--violet)] rounded-full transition-[width] duration-500" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
+          <button
+            type="submit"
+            disabled={nameState === "saving" || !name.trim()}
+            className="self-start inline-flex items-center justify-center min-h-11 px-4 rounded-[var(--t-r-md)] font-semibold text-sm cursor-pointer disabled:opacity-60"
+            style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)" }}
+          >
+            {nameState === "saving" ? "Enregistrement..." : nameState === "saved" ? "✓ Enregistré" : "Enregistrer"}
+          </button>
+          {nameState === "error" && <p style={{ color: "var(--t-danger)" }}>Échec de l'enregistrement.</p>}
+        </form>
+      </section>
 
-        <div className={`${cardCls} p-5`}>
-          <p className={`${labelCls} mb-4`}>Mot de passe</p>
-          <form onSubmit={onChangePassword} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Mot de passe actuel</span>
-              <input type="password" className={inputCls} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Nouveau mot de passe</span>
-              <input type="password" minLength={8} className={inputCls} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-            </label>
-            {pwError && <p className="text-sm text-[var(--danger)]">{pwError}</p>}
-            <button
-              type="submit"
-              disabled={pwState === "saving" || !currentPassword || newPassword.length < 8}
-              className={`${btnSecondaryCls} self-start`}
-            >
-              {pwState === "saving" ? "Modification..." : pwState === "saved" ? "✓ Modifié" : "Changer le mot de passe"}
-            </button>
-          </form>
+      <section aria-labelledby="plan-h" className="p-[22px] flex flex-col gap-3" style={sectionStyle}>
+        <h2 id="plan-h" className="font-black text-[22px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Offre
+        </h2>
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-sm">{PLAN_LABELS[plan] || plan}</span>
+          <span className="text-xs" style={{ fontFamily: "var(--t-mono)", color: "var(--t-ink2)" }}>
+            {resumeCount ?? "—"} / {limit === Infinity ? "∞" : limit} CV
+          </span>
         </div>
-      </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--t-track)" }}>
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--t-accent)" }} />
+        </div>
+        <a
+          href="/abonnement"
+          className="self-start mt-1 inline-flex items-center min-h-11 px-4 rounded-[var(--t-r-md)] font-semibold text-sm"
+          style={{ border: "1.5px solid var(--t-line)", background: "var(--t-surface)", color: "var(--t-ink)" }}
+        >
+          Gérer mon offre
+        </a>
+      </section>
+
+      <section aria-labelledby="pw-h" className="p-[22px] flex flex-col gap-3.5" style={sectionStyle}>
+        <h2 id="pw-h" className="font-black text-[22px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Mot de passe
+        </h2>
+        <form onSubmit={onChangePassword} className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5 font-semibold text-[13px]" style={{ color: "var(--t-ink2)" }}>
+            Mot de passe actuel
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] outline-none"
+              style={fieldStyle}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 font-semibold text-[13px]" style={{ color: "var(--t-ink2)" }}>
+            Nouveau mot de passe
+            <input
+              type="password"
+              minLength={8}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] outline-none"
+              style={fieldStyle}
+            />
+          </label>
+          {pwError && <p style={{ color: "var(--t-danger)" }}>{pwError}</p>}
+          <button
+            type="submit"
+            disabled={pwState === "saving" || !currentPassword || newPassword.length < 8}
+            className="self-start inline-flex items-center justify-center min-h-11 px-4 rounded-[var(--t-r-md)] font-semibold text-sm cursor-pointer disabled:opacity-60"
+            style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-surface)", color: "var(--t-ink)" }}
+          >
+            {pwState === "saving" ? "Modification..." : pwState === "saved" ? "✓ Modifié" : "Changer le mot de passe"}
+          </button>
+        </form>
+      </section>
     </div>
   );
 }

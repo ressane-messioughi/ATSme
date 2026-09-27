@@ -12,35 +12,59 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="max-w-5xl">
-      <h1 className="text-2xl font-bold mb-1">Vue d'ensemble</h1>
-      <p className="text-[var(--text-dim)] text-sm mb-6">Statistiques réelles de la plateforme ATSme.</p>
+    <div className="max-w-5xl flex flex-col gap-6">
+      <header className="flex flex-col gap-1.5">
+        <div
+          className="font-semibold text-[11px] uppercase"
+          style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-warn-ink)" }}
+        >
+          Administration
+        </div>
+        <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+          Vue d'ensemble
+        </h1>
+      </header>
 
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
+      {error && <p style={{ color: "var(--t-danger)" }}>{error}</p>}
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <section className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
         <Stat label="Utilisateurs" value={stats?.totalUsers} />
-        <Stat label="En ligne maintenant" value={stats?.onlineNow} accent />
+        <Stat label="En ligne maintenant" value={stats?.onlineNow} accent sub="Activité réelle, 5 dernières minutes" />
         <Stat label="Nouveaux (7 jours)" value={stats?.newUsers7d} />
         <Stat label="Actifs (30 jours)" value={stats?.activeUsers30d} />
         <Stat label="CV totaux" value={stats?.totalResumes} />
         <Stat label="CV importés" value={stats?.importedResumes} />
         <Stat label="CV analysés" value={stats?.analyzedResumes} />
         <Stat label="Score ATS moyen" value={stats?.avgScore != null ? `${stats.avgScore}/100` : undefined} />
-      </div>
+      </section>
 
-      <p className="text-xs text-[var(--text-faint)]">
+      <p className="text-xs" style={{ color: "var(--t-muted)" }}>
         Le statut « en ligne » reflète une activité authentifiée réelle dans les 5 dernières minutes — jamais simulé.
       </p>
     </div>
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string | number | undefined; accent?: boolean }) {
+function Stat({ label, value, accent, sub }: { label: string; value: string | number | undefined; accent?: boolean; sub?: string }) {
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-4">
-      <p className="text-xs text-[var(--text-faint)] mb-2">{label}</p>
-      <p className={`font-[var(--ff-mono)] text-xl font-medium ${accent ? "text-[var(--good)]" : ""}`}>{value ?? "—"}</p>
+    <div
+      className="p-5 rounded-[var(--t-r-lg)] flex flex-col gap-1.5"
+      style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+    >
+      <div
+        className="font-semibold text-[11px] uppercase"
+        style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}
+      >
+        {label}
+      </div>
+      <div className="font-black text-[34px]" style={{ fontFamily: "var(--t-display)", color: accent ? "var(--t-accent)" : "var(--t-ink)" }}>
+        {value ?? "—"}
+      </div>
+      {sub && (
+        <div className="text-[13px]" style={{ color: "var(--t-muted)" }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }

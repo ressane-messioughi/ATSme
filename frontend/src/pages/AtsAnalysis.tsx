@@ -1,63 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { type Resume, type ResumeSummary, getResume, listResumes } from "../lib/resumeApi";
+import { Link } from "react-router-dom";
+import { type Resume, type ResumeSummary, getResume, listResumes, scoreLabel } from "../lib/resumeApi";
 import ScoreGauge from "../components/ScoreGauge.tsx";
 import { IconCheck, IconWarn } from "../components/icons.tsx";
 
-const AXES: { key: keyof NonNullable<Resume["scoreBreakdown"]>; label: string; max: number }[] = [
-  { key: "keywords", label: "Mots-clés", max: 30 },
-  { key: "structure", label: "Structure", max: 20 },
-  { key: "readability", label: "Lisibilité", max: 20 },
-  { key: "sections", label: "Sections", max: 20 },
-  { key: "atsCompat", label: "Format", max: 10 },
+const AXES: { key: keyof NonNullable<Resume["scoreBreakdown"]>; label: string }[] = [
+  { key: "keywords", label: "Mots-clés" },
+  { key: "structure", label: "Structure" },
+  { key: "readability", label: "Lisibilité" },
+  { key: "sections", label: "Sections" },
+  { key: "atsCompat", label: "Format" },
 ];
-
-function polygonPoints(values: number[], cx: number, cy: number, radius: number) {
-  return values
-    .map((v, i) => {
-      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / values.length;
-      const r = radius * Math.max(0, Math.min(1, v));
-      return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
-    })
-    .join(" ");
-}
-
-function RadarChart({ ratios, labels }: { ratios: number[]; labels: string[] }) {
-  const size = 260;
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = 92;
-  const rings = [0.25, 0.5, 0.75, 1];
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {rings.map((r) => (
-        <polygon key={r} points={polygonPoints(new Array(ratios.length).fill(r), cx, cy, radius)} fill="none" stroke="var(--border)" strokeWidth="1" />
-      ))}
-      {ratios.map((_, i) => {
-        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ratios.length;
-        return (
-          <line key={i} x1={cx} y1={cy} x2={cx + radius * Math.cos(angle)} y2={cy + radius * Math.sin(angle)} stroke="var(--border)" strokeWidth="1" />
-        );
-      })}
-      <polygon points={polygonPoints(ratios, cx, cy, radius)} fill="var(--violet-glow)" stroke="var(--violet-soft)" strokeWidth="2" />
-      {ratios.map((v, i) => {
-        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ratios.length;
-        const r = radius * v;
-        return <circle key={i} cx={cx + r * Math.cos(angle)} cy={cy + r * Math.sin(angle)} r="3" fill="var(--violet-soft)" />;
-      })}
-      {labels.map((label, i) => {
-        const angle = -Math.PI / 2 + (i * 2 * Math.PI) / labels.length;
-        const lx = cx + (radius + 22) * Math.cos(angle);
-        const ly = cy + (radius + 22) * Math.sin(angle);
-        return (
-          <text key={label} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="var(--text-dim)">
-            {label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
 
 export default function AtsAnalysis() {
   const [resumes, setResumes] = useState<ResumeSummary[] | null>(null);
@@ -83,9 +36,8 @@ export default function AtsAnalysis() {
       .catch(() => setError("CV introuvable."));
   }, [selectedId]);
 
-  const ratios = useMemo(() => AXES.map((a) => (resume?.scoreBreakdown ? resume.scoreBreakdown[a.key] / a.max : 0)), [resume]);
   const strengths = useMemo(
-    () => (resume?.scoreBreakdown ? AXES.filter((a) => resume.scoreBreakdown![a.key] / a.max >= 0.75).map((a) => a.label) : []),
+    () => (resume?.scoreBreakdown ? AXES.filter((a) => resume.scoreBreakdown![a.key] >= 75).map((a) => a.label) : []),
     [resume]
   );
 
@@ -96,7 +48,7 @@ export default function AtsAnalysis() {
       `Score global : ${resume.atsScore}/100`,
       "",
       "Répartition :",
-      ...AXES.map((a) => `- ${a.label} : ${resume.scoreBreakdown?.[a.key] ?? 0}/${a.max}`),
+      ...AXES.map((a) => `- ${a.label} : ${resume.scoreBreakdown?.[a.key] ?? 0}/100`),
       "",
       "Points forts :",
       ...(strengths.length ? strengths.map((s) => `- ${s}`) : ["- (aucun point au-dessus de 75% pour l'instant)"]),
@@ -117,91 +69,160 @@ export default function AtsAnalysis() {
     URL.revokeObjectURL(url);
   }
 
+  const eyebrow = (
+    <div className="font-semibold text-xs uppercase" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}>
+      Optimiser
+    </div>
+  );
+
   if (resumes && resumes.length === 0) {
     return (
-      <div className="max-w-3xl">
-        <h1 className="text-2xl font-bold mb-3">Analyse ATS</h1>
-        <div className="border border-dashed border-[var(--border)] rounded-xl px-6 py-14 text-center">
-          <p className="text-sm text-[var(--text-dim)]">Importez ou créez un CV pour obtenir une analyse détaillée.</p>
+      <div className="max-w-[720px] flex flex-col gap-2">
+        {eyebrow}
+        <h1 className="font-black text-3xl m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Analyse ATS
+        </h1>
+        <div className="rounded-[var(--t-r-lg)] px-6 py-14 text-center mt-4" style={{ border: "1px dashed var(--t-line-soft)" }}>
+          <p className="text-sm" style={{ color: "var(--t-ink2)" }}>
+            Importez ou créez un CV pour obtenir une analyse détaillée.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-        <h1 className="text-2xl font-bold">Analyse ATS détaillée</h1>
-        {resumes && resumes.length > 0 && (
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            className="bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[var(--violet-soft)]"
-          >
-            {resumes.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.title} ({r.ats_score ?? "—"}/100)
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
-      {!resume && <p className="text-sm text-[var(--text-faint)]">Chargement...</p>}
-
-      {resume && (
-        <div className="grid lg:grid-cols-3 gap-5">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 flex flex-col items-center justify-center text-center">
-            <ScoreGauge score={resume.atsScore} size={140} />
-            <p className="text-xs text-[var(--text-dim)] mt-3">Votre CV est bien optimisé pour les systèmes ATS.</p>
-          </div>
-
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 flex flex-col items-center">
-            <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-2 self-start">Répartition des scores</p>
-            <RadarChart ratios={ratios} labels={AXES.map((a) => a.label)} />
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-              <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--good)] mb-3">Points forts</p>
-              {strengths.length === 0 && <p className="text-xs text-[var(--text-faint)]">Aucune catégorie au-dessus de 75% pour l'instant.</p>}
-              <div className="flex flex-col gap-2">
-                {strengths.map((s) => (
-                  <div key={s} className="flex items-center gap-2 text-sm">
-                    <IconCheck className="w-4 h-4 text-[var(--good)] shrink-0" />
-                    {s}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-              <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--warn)] mb-3">À améliorer</p>
-              {(!resume.recommendations || resume.recommendations.length === 0) && (
-                <p className="text-xs text-[var(--text-faint)]">Aucune recommandation — votre CV est bien optimisé.</p>
-              )}
-              <div className="flex flex-col gap-2">
-                {(resume.recommendations || []).map((r, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    <IconWarn className="w-4 h-4 text-[var(--warn)] shrink-0 mt-0.5" />
-                    {r.issue}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+    <div className="max-w-[1080px] flex flex-col gap-7">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-2 min-w-0">
+          {eyebrow}
+          <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+            Analyse ATS
+          </h1>
+          <p className="m-0 text-base" style={{ color: "var(--t-ink2)" }}>
+            {resume ? `Résultat pour « ${resume.title} ».` : "Choisissez un CV à analyser."}
+          </p>
         </div>
+        {resumes && resumes.length > 0 && (
+          <label className="flex flex-col gap-1.5">
+            <span className="sr-only">CV à analyser</span>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] outline-none"
+              style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-field)", color: "var(--t-ink)" }}
+            >
+              {resumes.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.title} ({r.ats_score ?? "—"}/100)
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </header>
+
+      {error && <p style={{ color: "var(--t-danger)" }}>{error}</p>}
+      {!resume && !error && (
+        <p className="text-sm" style={{ color: "var(--t-muted)" }}>
+          Chargement...
+        </p>
       )}
 
       {resume && (
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={downloadReport}
-            className="bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg px-5 py-2.5 text-sm font-medium text-white cursor-pointer"
+        <>
+          <section
+            className="p-6 rounded-[var(--t-r-lg)] flex flex-wrap items-center gap-7"
+            style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
           >
-            Télécharger le rapport
-          </button>
-        </div>
+            <ScoreGauge score={resume.atsScore} size={150} stroke={10} showLabel={false} />
+            <div className="flex-1 min-w-[220px] flex flex-col gap-2">
+              <h2 className="font-black text-2xl m-0" style={{ fontFamily: "var(--t-display)" }}>
+                {scoreLabel(resume.atsScore)}
+              </h2>
+              <p className="m-0 text-base" style={{ color: "var(--t-ink2)" }}>
+                Votre CV est optimisé pour les systèmes de recrutement automatisés selon {AXES.length} critères.
+              </p>
+            </div>
+          </section>
+
+          <div className="grid gap-5 items-start" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
+            <section
+              aria-labelledby="an-crit"
+              className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-4"
+              style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+            >
+              <h2 id="an-crit" className="font-black text-xl m-0" style={{ fontFamily: "var(--t-display)" }}>
+                Détail par critère
+              </h2>
+              {AXES.map((a) => {
+                const v = resume.scoreBreakdown?.[a.key] ?? 0;
+                return (
+                  <div key={a.key} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between text-[15px]">
+                      <span>{a.label}</span>
+                      <span className="font-semibold">{v}</span>
+                    </div>
+                    <div aria-hidden="true" className="h-2 rounded overflow-hidden" style={{ background: "var(--t-track)" }}>
+                      <div className="h-full" style={{ width: `${v}%`, background: v >= 75 ? "var(--t-accent)" : "var(--t-warn)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+
+            <section
+              aria-labelledby="an-list"
+              className="p-6 rounded-[var(--t-r-lg)] flex flex-col"
+              style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+            >
+              <h2 id="an-list" className="font-black text-xl m-0 mb-2" style={{ fontFamily: "var(--t-display)" }}>
+                Points relevés
+              </h2>
+              <ul className="list-none m-0 p-0">
+                {(resume.recommendations || []).map((r, i) => (
+                  <li key={i} className="flex flex-wrap items-center gap-3 py-3.5" style={{ borderTop: "1px solid var(--t-line-soft)" }}>
+                    <span className="shrink-0 flex" style={{ color: "var(--t-warn)" }}>
+                      <IconWarn className="w-[18px] h-[18px]" />
+                    </span>
+                    <span className="flex-1 min-w-[220px] text-[15px] leading-[1.45]">{r.issue}</span>
+                    <Link
+                      to={`/cv/${resume.id}`}
+                      className="inline-flex items-center justify-center gap-2 min-h-10 px-4 rounded-[var(--t-r-md)] font-semibold text-sm"
+                      style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-surface)", color: "var(--t-ink)" }}
+                    >
+                      Corriger
+                    </Link>
+                  </li>
+                ))}
+                {strengths.map((s) => (
+                  <li key={s} className="flex flex-wrap items-center gap-3 py-3.5" style={{ borderTop: "1px solid var(--t-line-soft)" }}>
+                    <span className="shrink-0 flex" style={{ color: "var(--t-accent)" }}>
+                      <IconCheck className="w-[18px] h-[18px]" />
+                    </span>
+                    <span className="flex-1 min-w-[220px] text-[15px] leading-[1.45]">{s} au-dessus de 75/100.</span>
+                  </li>
+                ))}
+                {(resume.recommendations?.length ?? 0) === 0 && strengths.length === 0 && (
+                  <li className="py-3.5 text-sm" style={{ color: "var(--t-muted)" }}>
+                    Aucun point notable pour l'instant.
+                  </li>
+                )}
+              </ul>
+            </section>
+          </div>
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={downloadReport}
+              className="inline-flex items-center justify-center gap-2 min-h-11 px-5 rounded-[var(--t-r-md)] font-semibold text-[15px] cursor-pointer"
+              style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)", boxShadow: "0 2px 0 var(--t-shadow)" }}
+            >
+              Télécharger le rapport
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

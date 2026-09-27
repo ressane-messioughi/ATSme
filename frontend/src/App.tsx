@@ -13,6 +13,7 @@ import AtsAnalysis from "./pages/AtsAnalysis.tsx";
 import JobOffers from "./pages/JobOffers.tsx";
 import History from "./pages/History.tsx";
 import Settings from "./pages/Settings.tsx";
+import Abonnement from "./pages/Abonnement.tsx";
 import AdminShell from "./components/AdminShell.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="analyse" element={<AtsAnalysis />} />
         <Route path="offres" element={<JobOffers />} />
         <Route path="historique" element={<History />} />
+        <Route path="abonnement" element={<Abonnement />} />
         <Route path="parametres" element={<Settings />} />
       </Route>
       <Route path="/admin" element={<AdminShell />}>

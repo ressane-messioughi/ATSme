@@ -1,10 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { type ResumeSummary, listResumes, listVersions, scoreTone } from "../lib/resumeApi";
 
 type VersionRow = { id: number; label: string | null; ats_score: number | null; created_at: string };
+type Event = { key: string; resumeId: number; resumeTitle: string; label: string | null; score: number | null; date: Date };
 
-const toneClass = { good: "text-[var(--good)]", warn: "text-[var(--warn)]", danger: "text-[var(--danger)]" };
+const DOT_COLOR = { good: "var(--t-accent)", warn: "var(--t-warn)", danger: "var(--t-danger)" };
+
+function dayLabel(date: Date): string {
+  const now = new Date();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86400000);
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return "Hier";
+  if (diffDays < 7) return `Il y a ${diffDays} jours`;
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+}
 
 export default function History() {
   const [resumes, setResumes] = useState<ResumeSummary[] | null>(null);
@@ -15,65 +26,98 @@ export default function History() {
     listResumes()
       .then(async (list) => {
         setResumes(list);
-        const entries = await Promise.all(
-          list.map(async (r) => [r.id, await listVersions(r.id).catch(() => [])] as const)
-        );
+        const entries = await Promise.all(list.map(async (r) => [r.id, await listVersions(r.id).catch(() => [])] as const));
         setVersionsByResume(Object.fromEntries(entries));
       })
       .catch(() => setError("Impossible de charger l'historique."));
   }, []);
 
-  const withHistory = (resumes || []).filter((r) => (versionsByResume[r.id] || []).length > 0);
+  const days = useMemo(() => {
+    const events: Event[] = [];
+    for (const r of resumes || []) {
+      for (const v of versionsByResume[r.id] || []) {
+        events.push({
+          key: `${r.id}-${v.id}`,
+          resumeId: r.id,
+          resumeTitle: r.title,
+          label: v.label,
+          score: v.ats_score,
+          date: new Date(v.created_at),
+        });
+      }
+    }
+    events.sort((a, b) => b.date.getTime() - a.date.getTime());
+    const groups = new Map<string, Event[]>();
+    for (const ev of events) {
+      const key = dayLabel(ev.date);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(ev);
+    }
+    return [...groups.entries()];
+  }, [resumes, versionsByResume]);
+
+  const eyebrow = (
+    <div className="font-semibold text-xs uppercase" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}>
+      Suivre
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-2xl font-bold mb-1">Historique</h1>
-      <p className="text-[var(--text-dim)] text-sm mb-6">Suivez la progression de votre score ATS à chaque version enregistrée.</p>
+    <div className="max-w-[1080px] flex flex-col gap-7">
+      <header className="flex flex-col gap-1.5">
+        {eyebrow}
+        <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+          Ce qui s'est passé
+        </h1>
+      </header>
 
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
+      {error && <p style={{ color: "var(--t-danger)" }}>{error}</p>}
 
-      {resumes && withHistory.length === 0 && (
-        <div className="border border-dashed border-[var(--border)] rounded-xl px-6 py-14 text-center">
-          <p className="text-sm text-[var(--text-dim)]">
-            Aucune version enregistrée pour l'instant. Ouvrez un CV et cliquez sur « + Nouvelle » dans le bloc Versions pour
-            commencer à suivre sa progression.
+      {resumes && days.length === 0 && (
+        <div className="rounded-[var(--t-r-lg)] px-6 py-14 text-center" style={{ border: "1px dashed var(--t-line-soft)" }}>
+          <p className="text-sm" style={{ color: "var(--t-ink2)" }}>
+            Aucune version enregistrée pour l'instant. Ouvrez un CV et cliquez sur « + Nouvelle » dans le bloc Versions pour commencer à
+            suivre sa progression.
           </p>
         </div>
       )}
 
-      <div className="flex flex-col gap-5">
-        {withHistory.map((r) => {
-          const versions = [...(versionsByResume[r.id] || [])].sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          );
-          return (
-            <div key={r.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-5">
-              <div className="flex items-center justify-between mb-4">
-                <Link to={`/cv/${r.id}`} className="text-sm font-semibold hover:text-[var(--violet-soft)] transition-colors">
-                  {r.title}
-                </Link>
-                <span className={`font-[var(--ff-mono)] text-sm font-medium ${toneClass[scoreTone(r.ats_score)]}`}>
-                  Actuel : {r.ats_score ?? "—"}/100
-                </span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {versions.map((v, i) => (
-                  <div key={v.id} className="flex items-center gap-2">
-                    <div className="flex flex-col items-center bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3 py-2 min-w-[84px]">
-                      <span className="text-[10px] text-[var(--text-faint)]">{v.label || `Version ${i + 1}`}</span>
-                      <span className={`font-[var(--ff-mono)] text-sm font-semibold ${toneClass[scoreTone(v.ats_score)]}`}>
-                        {v.ats_score ?? "—"}
-                      </span>
-                      <span className="text-[10px] text-[var(--text-faint)]">{new Date(v.created_at).toLocaleDateString("fr-FR")}</span>
-                    </div>
-                    {i < versions.length - 1 && <span className="text-[var(--text-faint)]">→</span>}
+      {days.map(([label, events]) => (
+        <section key={label} className="flex flex-col gap-2.5">
+          <div
+            className="font-semibold text-xs uppercase"
+            style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.12em", color: "var(--t-muted)" }}
+          >
+            {label}
+          </div>
+          <div className="rounded-[var(--t-r-lg)] px-[18px]" style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}>
+            {events.map((ev, i) => (
+              <div
+                key={ev.key}
+                className="flex gap-3.5 items-start py-3.5"
+                style={{ borderBottom: i < events.length - 1 ? "1px dashed var(--t-line-soft)" : "none" }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="w-3 h-3 rounded-full shrink-0 mt-1.5"
+                  style={{ background: DOT_COLOR[scoreTone(ev.score)], border: "1.5px solid var(--t-line)" }}
+                />
+                <div className="flex-1 min-w-0">
+                  <Link to={`/cv/${ev.resumeId}`} className="font-semibold text-[15px] hover:underline">
+                    {ev.label || "Version enregistrée"} — {ev.resumeTitle}
+                  </Link>
+                  <div className="text-sm" style={{ color: "var(--t-ink2)" }}>
+                    {ev.score != null ? `Score ${ev.score}/100` : "Score non calculé"}
                   </div>
-                ))}
+                </div>
+                <div className="text-[13px] shrink-0" style={{ color: "var(--t-muted)" }}>
+                  {ev.date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

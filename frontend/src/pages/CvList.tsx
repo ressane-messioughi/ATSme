@@ -12,7 +12,14 @@ import {
 } from "../lib/resumeApi";
 import { IconPencil, IconTrash } from "../components/icons.tsx";
 
-const toneClass = { good: "text-[var(--good)]", warn: "text-[var(--warn)]", danger: "text-[var(--danger)]" };
+const toneStyle = {
+  good: { background: "var(--t-accent-soft)", color: "var(--t-accent-ink)" },
+  warn: { background: "var(--t-warn-soft)", color: "var(--t-warn-ink)" },
+  danger: { background: "var(--t-danger-soft)", color: "var(--t-danger)" },
+};
+
+const btnCls = "inline-flex items-center justify-center gap-2 min-h-10 px-3.5 rounded-[var(--t-r-md)] font-semibold text-sm cursor-pointer disabled:opacity-50";
+const btnStyle = { border: "1.5px solid var(--t-field-line)", background: "var(--t-surface)", color: "var(--t-ink)" };
 
 export default function CvList() {
   const navigate = useNavigate();
@@ -93,125 +100,181 @@ export default function CvList() {
   }
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <div>
-          <p className="font-[var(--ff-mono)] text-xs uppercase tracking-widest text-[var(--violet-soft)] mb-2">Mes CV</p>
-          <h1 className="text-2xl font-bold">Vos documents</h1>
-        </div>
-        <button
-          onClick={() => navigate("/cv/nouveau")}
-          className="bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg px-4 py-2.5 text-sm font-medium text-white cursor-pointer"
-        >
-          + Nouveau CV
-        </button>
-      </div>
-
-      {resumes && resumes.length > 0 && (
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher un CV par nom..."
-          className="w-full max-w-sm bg-[var(--surface-2)] border border-[var(--border)] rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-[var(--violet-soft)] transition-colors mb-6"
-        />
-      )}
-
-      {error && <p className="text-sm text-[var(--danger)] mb-4">{error}</p>}
-
-      {resumes && resumes.length === 0 && (
-        <div className="border border-dashed border-[var(--border)] rounded-xl px-6 py-14 text-center">
-          <p className="text-sm text-[var(--text-dim)] mb-4">
-            Vous n'avez pas encore de CV. Importez-en un ou créez-en un pour obtenir votre score ATS.
+    <div className="max-w-[1080px] mx-auto flex flex-col gap-7">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="font-semibold text-xs uppercase" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}>
+            Créer
+          </div>
+          <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+            Mes CV
+          </h1>
+          <p className="m-0 text-base leading-[1.55] max-w-[62ch]" style={{ color: "var(--t-ink2)" }}>
+            Retrouvez, modifiez et analysez vos CV.
           </p>
-          <Link
-            to="/cv/nouveau"
-            className="inline-block bg-[var(--violet)] hover:bg-[var(--violet-soft)] transition-colors rounded-lg px-4 py-2.5 text-sm font-medium text-white"
-          >
-            Commencer
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          <Link to="/templates" className={btnCls} style={btnStyle}>
+            Modèles
           </Link>
+          <button
+            type="button"
+            onClick={() => navigate("/cv/nouveau")}
+            className="inline-flex items-center justify-center gap-2 min-h-11 px-[18px] rounded-[var(--t-r-md)] font-semibold text-[15px] cursor-pointer"
+            style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)", boxShadow: "0 2px 0 var(--t-shadow)" }}
+          >
+            <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nouveau CV
+          </button>
         </div>
-      )}
+      </header>
 
-      {filtered && filtered.length === 0 && resumes && resumes.length > 0 && (
-        <p className="text-sm text-[var(--text-faint)] py-8 text-center">Aucun CV ne correspond à « {query} ».</p>
-      )}
+      {error && <p style={{ color: "var(--t-danger)" }}>{error}</p>}
 
-      {filtered && filtered.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {filtered.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center justify-between gap-4 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-5 py-4"
+      <section
+        aria-label="Liste des CV"
+        className="rounded-[var(--t-r-lg)] flex flex-col min-w-0"
+        style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+      >
+        {resumes && resumes.length > 0 && (
+          <div className="p-5" style={{ borderBottom: "1px solid var(--t-line-soft)" }}>
+            <label className="flex flex-col gap-1.5 font-semibold text-sm max-w-[360px]" style={{ color: "var(--t-ink)" }}>
+              Rechercher
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Nom du CV"
+                className="min-h-11 px-3 rounded-[var(--t-r-md)] outline-none"
+                style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-field)", color: "var(--t-ink)", fontSize: 16 }}
+              />
+            </label>
+          </div>
+        )}
+
+        {resumes && resumes.length === 0 && (
+          <div className="flex flex-col items-center gap-4 text-center px-6 py-14">
+            <p className="text-sm m-0" style={{ color: "var(--t-ink2)" }}>
+              Vous n'avez pas encore de CV. Importez-en un ou créez-en un pour obtenir votre score ATS.
+            </p>
+            <Link
+              to="/cv/nouveau"
+              className="inline-flex items-center justify-center min-h-11 px-[18px] rounded-[var(--t-r-md)] font-semibold text-[15px]"
+              style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)" }}
             >
-              <div className="min-w-0 flex-1">
-                {renamingId === r.id ? (
-                  <input
-                    autoFocus
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onBlur={() => commitRename(r.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") commitRename(r.id);
-                      if (e.key === "Escape") setRenamingId(null);
-                    }}
-                    className="bg-[var(--surface-2)] border border-[var(--violet-soft)] rounded-md px-2 py-1 text-sm outline-none w-full max-w-xs"
-                  />
-                ) : (
-                  <Link to={`/cv/${r.id}`} className="group flex items-center gap-2 min-w-0">
-                    <p className="text-sm font-medium truncate">{r.title}</p>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        startRename(r);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-[var(--text)] transition-opacity shrink-0"
-                      title="Renommer"
-                    >
-                      <IconPencil className="w-3.5 h-3.5" />
-                    </button>
-                  </Link>
-                )}
-                <p className="text-xs text-[var(--text-faint)] mt-1">
-                  {r.source === "import" ? "Importé" : "Créé"} · maj{" "}
-                  {new Date(r.updated_at).toLocaleDateString("fr-FR")} · {r.template}
-                </p>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <span className={`font-[var(--ff-mono)] text-sm font-medium ${toneClass[scoreTone(r.ats_score)]}`}>
-                  {r.ats_score != null ? `${r.ats_score}/100` : "—"}
-                </span>
-                <span className="text-xs text-[var(--text-faint)] hidden md:inline">{scoreLabel(r.ats_score)}</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={busyId === r.id}
-                    onClick={() => onExport(r.id, r.title)}
-                    title="Exporter en PDF"
-                    className="text-xs font-[var(--ff-mono)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--violet-soft)] transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    PDF
-                  </button>
-                  <button
-                    disabled={busyId === r.id}
-                    onClick={() => onDuplicate(r.id)}
-                    title="Dupliquer"
-                    className="text-xs font-[var(--ff-mono)] border border-[var(--border)] rounded-md px-2.5 py-1.5 text-[var(--text-dim)] hover:text-[var(--text)] hover:border-[var(--violet-soft)] transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    Dupliquer
-                  </button>
-                  <button
-                    disabled={busyId === r.id}
-                    onClick={() => onDelete(r.id, r.title)}
-                    title="Supprimer"
-                    className="text-[var(--text-dim)] hover:text-[var(--danger)] transition-colors cursor-pointer disabled:opacity-50 border border-[var(--border)] hover:border-[var(--danger)] rounded-md p-1.5"
-                  >
-                    <IconTrash className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+              Commencer
+            </Link>
+          </div>
+        )}
+
+        {filtered && filtered.length > 0 && (
+          <>
+            <div role="status" className="px-6 pt-3 text-[13px]" style={{ color: "var(--t-muted)" }}>
+              {filtered.length} CV
             </div>
-          ))}
-        </div>
-      )}
+            <ul className="list-none m-0 px-3 py-3 flex flex-col">
+              {filtered.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-3.5 px-3 py-3.5 rounded-[var(--t-r-md)]">
+                  <div
+                    aria-hidden="true"
+                    className="w-10 h-[52px] rounded-md p-1.5 flex flex-col gap-1 shrink-0"
+                    style={{ border: "1px solid var(--t-line-soft)", background: "var(--t-field)" }}
+                  >
+                    <div className="h-1 w-[70%] rounded-sm" style={{ background: "var(--t-ink)" }} />
+                    <div className="h-[3px] w-[45%] rounded-sm" style={{ background: "var(--t-accent)" }} />
+                    <div className="h-[2px] mt-1" style={{ background: "var(--t-line-soft)" }} />
+                    <div className="h-[2px]" style={{ background: "var(--t-line-soft)" }} />
+                    <div className="h-[2px] w-[80%]" style={{ background: "var(--t-line-soft)" }} />
+                  </div>
+
+                  <div className="flex-1 min-w-[200px] min-w-0">
+                    {renamingId === r.id ? (
+                      <input
+                        autoFocus
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={() => commitRename(r.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") commitRename(r.id);
+                          if (e.key === "Escape") setRenamingId(null);
+                        }}
+                        className="rounded-md px-2 py-1 text-sm outline-none w-full max-w-xs"
+                        style={{ background: "var(--t-field)", border: "1.5px solid var(--t-accent)" }}
+                      />
+                    ) : (
+                      <div className="group flex items-center gap-2 min-w-0">
+                        <span className="font-semibold text-base truncate">{r.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => startRename(r)}
+                          aria-label={`Renommer ${r.title}`}
+                          className="opacity-0 group-hover:opacity-100 shrink-0 cursor-pointer"
+                          style={{ color: "var(--t-muted)" }}
+                        >
+                          <IconPencil className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="text-[13px]" style={{ color: "var(--t-muted)" }}>
+                      {r.source === "import" ? "Importé" : "Créé"} · modifié le {new Date(r.updated_at).toLocaleDateString("fr-FR")}
+                    </div>
+                  </div>
+
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--t-r-pill)] font-semibold text-[13px] whitespace-nowrap"
+                    style={r.ats_score != null ? toneStyle[scoreTone(r.ats_score)] : { background: "var(--t-surface2)", color: "var(--t-muted)" }}
+                  >
+                    {r.ats_score != null ? `Score ${r.ats_score}` : scoreLabel(r.ats_score)}
+                  </span>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Link to={`/cv/${r.id}`} aria-label={`Modifier ${r.title}`} className={btnCls} style={btnStyle}>
+                      Modifier
+                    </Link>
+                    <Link to="/analyse" aria-label={`Analyser ${r.title}`} className={btnCls} style={btnStyle}>
+                      Analyser
+                    </Link>
+                    <button type="button" disabled={busyId === r.id} onClick={() => onExport(r.id, r.title)} className={btnCls} style={btnStyle}>
+                      PDF
+                    </button>
+                    <button type="button" disabled={busyId === r.id} onClick={() => onDuplicate(r.id)} className={btnCls} style={btnStyle}>
+                      Dupliquer
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === r.id}
+                      onClick={() => onDelete(r.id, r.title)}
+                      aria-label={`Supprimer ${r.title}`}
+                      className="min-w-11 min-h-11 grid place-items-center rounded-[var(--t-r-md)] cursor-pointer disabled:opacity-50"
+                      style={{ border: "1.5px solid var(--t-field-line)", color: "var(--t-ink2)" }}
+                    >
+                      <IconTrash className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {filtered && filtered.length === 0 && resumes && resumes.length > 0 && (
+          <div className="flex flex-col items-start gap-2.5 px-6 pt-2 pb-7">
+            <p className="m-0 text-[15px]" style={{ color: "var(--t-ink2)" }}>
+              Aucun CV ne correspond à votre recherche.
+            </p>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="inline-flex items-center min-h-11 font-semibold text-[15px] underline underline-offset-[3px] cursor-pointer"
+              style={{ color: "var(--t-accent)" }}
+            >
+              Effacer la recherche
+            </button>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
