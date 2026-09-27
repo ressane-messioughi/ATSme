@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
-import BrandOrb from "./BrandOrb.tsx";
+import CatLogo from "./CatLogo.tsx";
 import {
   IconBriefcase,
   IconChart,
@@ -12,69 +12,99 @@ import {
   IconLayers,
 } from "./icons.tsx";
 
-const items = [
-  { to: "/", label: "Tableau de bord", end: true, icon: IconDashboard },
-  { to: "/cv", label: "Mes CV", icon: IconFile },
-  { to: "/cv/nouveau", label: "Nouveau CV", icon: IconPlusCircle },
-  { to: "/templates", label: "Templates", icon: IconLayers },
-  { to: "/analyse", label: "Analyse ATS", icon: IconChart },
-  { to: "/offres", label: "Offres d'emploi", icon: IconBriefcase },
-  { to: "/historique", label: "Historique", icon: IconHistory },
-  { to: "/parametres", label: "Paramètres", icon: IconSettings },
+const GROUPS: { title: string | null; items: { to: string; label: string; end?: boolean; icon: typeof IconDashboard }[] }[] = [
+  { title: null, items: [{ to: "/", label: "Tableau de bord", end: true, icon: IconDashboard }] },
+  {
+    title: "Créer",
+    items: [
+      { to: "/cv", label: "Mes CV", icon: IconFile },
+      { to: "/cv/nouveau", label: "Nouveau CV", icon: IconPlusCircle },
+      { to: "/templates", label: "Modèles", icon: IconLayers },
+    ],
+  },
+  {
+    title: "Optimiser",
+    items: [
+      { to: "/analyse", label: "Analyse ATS", icon: IconChart },
+      { to: "/offres", label: "Offres d'emploi", icon: IconBriefcase },
+    ],
+  },
+  { title: "Suivre", items: [{ to: "/historique", label: "Historique", icon: IconHistory }] },
+  { title: "Compte", items: [{ to: "/parametres", label: "Paramètres", icon: IconSettings }] },
 ];
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   return (
-    <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-[var(--border)] px-4 py-6">
-      <div className="flex items-center gap-2.5 px-2 mb-8">
-        <BrandOrb size={30} className="shrink-0 drop-shadow-[0_4px_14px_var(--violet-glow)]" />
-        <span className="font-[var(--ff-display)] font-bold text-[15px] tracking-tight">ATSme</span>
-      </div>
-      <nav className="flex flex-col gap-1 flex-1">
-        {items.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive
-                  ? "bg-[var(--violet-glow)] text-[var(--violet-soft)] font-medium"
-                  : "text-[var(--text-dim)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-              }`
-            }
+    <aside
+      className="hidden md:flex flex-col gap-[22px] w-[248px] shrink-0 px-3.5 py-4 sticky top-0 self-start max-h-screen overflow-auto"
+      style={{ background: "var(--t-surface)", borderRight: "1px solid var(--t-line-soft)", minHeight: "100vh" }}
+    >
+      <NavLink to="/" className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--t-r-md)]" style={{ color: "var(--t-ink)" }}>
+        <CatLogo size={34} />
+        <span className="font-bold text-[20px]" style={{ fontFamily: "var(--t-display)" }}>
+          ATSme
+        </span>
+        {Boolean(user?.is_admin) && (
+          <span
+            className="ml-auto font-semibold text-[10px] tracking-[0.12em] px-1.5 py-0.5 rounded-[var(--t-r-pill)]"
+            style={{ background: "var(--t-warn-soft)", color: "var(--t-warn-ink)" }}
           >
-            <item.icon />
-            {item.label}
-          </NavLink>
+            ADMIN
+          </span>
+        )}
+      </NavLink>
+
+      <nav aria-label="Navigation principale" className="flex flex-col gap-[18px]">
+        {GROUPS.map((grp, gi) => (
+          <div key={gi} className="flex flex-col gap-0.5">
+            {grp.title && (
+              <div
+                className="px-3 pb-1.5 font-semibold text-[11px] uppercase"
+                style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-muted)" }}
+              >
+                {grp.title}
+              </div>
+            )}
+            {grp.items.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 w-full min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] transition-colors ${isActive ? "font-semibold" : "font-medium"}`
+                }
+                style={({ isActive }) =>
+                  isActive
+                    ? { background: "var(--t-accent-soft)", color: "var(--t-accent-ink)", boxShadow: "inset 3px 0 0 var(--t-accent)" }
+                    : { color: "var(--t-ink2)" }
+                }
+              >
+                <item.icon />
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
-      {Boolean(user?.is_admin) && (
-        <NavLink
-          to="/admin"
-          className="flex items-center gap-2.5 px-3 py-2 mb-2 rounded-lg text-sm text-[var(--violet-soft)] hover:bg-[var(--violet-glow)] transition-colors font-[var(--ff-mono)] text-xs uppercase tracking-wider"
-        >
-          Panel admin
-        </NavLink>
-      )}
-      <div className="flex items-center gap-2.5 px-2 pt-4 border-t border-[var(--border)]">
-        <span className="w-8 h-8 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center text-xs font-semibold shrink-0">
-          {user?.name?.slice(0, 1).toUpperCase()}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium truncate">{user?.name}</p>
-          <p className="text-[11px] text-[var(--text-faint)] truncate">{user?.email}</p>
+
+      <div
+        className="mt-auto p-3.5 rounded-[var(--t-r-md)] flex flex-col gap-1.5"
+        style={{ background: "var(--t-bg)", border: "1px solid var(--t-line-soft)" }}
+      >
+        <div className="flex justify-between items-baseline gap-2">
+          <span className="font-semibold text-sm">Crédits d'export</span>
         </div>
-        <button
-          onClick={logout}
-          title="Déconnexion"
-          className="text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors cursor-pointer shrink-0 p-1"
+        <span className="text-[13px]" style={{ color: "var(--t-muted)" }}>
+          1 € par CV exporté
+        </span>
+        <NavLink
+          to="/parametres"
+          className="self-start text-[14px] font-semibold underline underline-offset-[3px]"
+          style={{ color: "var(--t-accent)" }}
         >
-          <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
-            <path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+          Gérer mon offre
+        </NavLink>
       </div>
     </aside>
   );

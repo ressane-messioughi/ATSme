@@ -1,28 +1,11 @@
-import { type DragEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, type Variants } from "framer-motion";
-import { type ResumeSummary, importResume, listResumes, scoreTone } from "../lib/resumeApi";
+import { type ResumeSummary, type ScoreBreakdown, getResume, listResumes, scoreLabel } from "../lib/resumeApi";
 import { useAuth } from "../lib/auth.tsx";
-import BrandOrb from "../components/BrandOrb.tsx";
-import { IconBriefcase, IconBulb, IconChart, IconLayers, IconPlusCircle, IconUpload } from "../components/icons.tsx";
-import { btnPrimaryCls, cardCls } from "../lib/ui.ts";
+import { useTheme3D } from "../lib/theme3d.ts";
+import OfficeVignette from "../components/OfficeVignette.tsx";
+import { IconPlusCircle } from "../components/icons.tsx";
 
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.35, delay: i * 0.05, ease: "easeOut" } }),
-};
-
-const ringColor = { good: "var(--good)", warn: "var(--warn)", danger: "var(--danger)" };
-
-const QUICK_ACTIONS = [
-  { to: "/cv/nouveau", label: "Nouveau CV", desc: "Partir d'une page blanche", icon: IconPlusCircle },
-  { to: "/templates", label: "Templates", desc: "Changer de mise en forme", icon: IconLayers },
-  { to: "/analyse", label: "Analyse ATS", desc: "Comprendre votre score", icon: IconChart },
-  { to: "/offres", label: "Offres d'emploi", desc: "Comparer à une annonce", icon: IconBriefcase },
-];
-
-// Un conseil différent chaque jour plutôt qu'au hasard à chaque rendu : deux visites la
-// même journée montrent le même conseil, ce qui le rend crédible plutôt qu'aléatoire.
 const ATS_TIPS = [
   "Reprenez les mots-clés exacts de l'offre (intitulé de poste, outils, compétences) : un ATS compare du texte, pas des synonymes.",
   "Préférez les intitulés de section classiques (« Expérience », « Formation ») aux formulations originales, plus difficiles à reconnaître automatiquement.",
@@ -33,20 +16,40 @@ const ATS_TIPS = [
   "Renseignez systématiquement entreprise, poste et dates pour chaque expérience : un champ manquant est un champ qu'un ATS ne peut pas extraire.",
   "Une photo de profil n'affecte pas votre score ATS sur ATSme tant qu'elle reste décorative — c'est justement comme ça qu'elle est placée dans vos exports.",
 ];
-
 function tipOfTheDay(): string {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   return ATS_TIPS[dayOfYear % ATS_TIPS.length];
 }
 
+type Todo = { title: string; hint: string; cta: string; to: string };
+
+function buildTodos(resumes: ResumeSummary[] | null): Todo[] {
+  if (!resumes) return [];
+  if (resumes.length === 0) {
+    return [{ title: "Créer votre premier CV", hint: "Un CV optimisé ATS en quelques minutes", cta: "Créer", to: "/cv/nouveau" }];
+  }
+  const todos: Todo[] = [];
+  const weakest = [...resumes].filter((r) => r.ats_score != null).sort((a, b) => (a.ats_score ?? 0) - (b.ats_score ?? 0))[0];
+  if (weakest && (weakest.ats_score ?? 100) < 85) {
+    todos.push({
+      title: `Améliorer « ${weakest.title} »`,
+      hint: `Score actuel : ${weakest.ats_score}/100 — ${scoreLabel(weakest.ats_score)}`,
+      cta: "Corriger",
+      to: `/cv/${weakest.id}`,
+    });
+  }
+  todos.push({ title: "Comparer à une offre d'emploi", hint: "Voyez quels mots-clés manquent à votre CV", cta: "Comparer", to: "/offres" });
+  if (todos.length < 3) todos.push({ title: "Explorer les modèles", hint: "Changez la mise en forme de votre CV", cta: "Voir", to: "/templates" });
+  return todos.slice(0, 3);
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme3D();
   const [resumes, setResumes] = useState<ResumeSummary[] | null>(null);
+  const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     listResumes()
@@ -54,195 +57,253 @@ export default function Dashboard() {
       .catch(() => setError("Impossible de charger votre tableau de bord."));
   }, []);
 
-  const scored = (resumes || []).filter((r) => r.ats_score != null);
-  const avgScore = scored.length ? Math.round(scored.reduce((s, r) => s + (r.ats_score || 0), 0) / scored.length) : null;
-  const bestScore = scored.length ? Math.max(...scored.map((r) => r.ats_score || 0)) : null;
+  const best = useMemo(() => {
+    const scored = (resumes || []).filter((r) => r.ats_score != null);
+    return scored.length ? scored.reduce((a, b) => ((a.ats_score ?? 0) >= (b.ats_score ?? 0) ? a : b)) : null;
+  }, [resumes]);
 
-  async function handleFile(file: File) {
-    setError(null);
-    if (!/\.(pdf|docx)$/i.test(file.name)) {
-      setError("Format non supporté — PDF ou DOCX uniquement.");
-      return;
-    }
-    setImporting(true);
-    try {
-      const resume = await importResume(file);
-      navigate(`/cv/${resume.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "L'import a échoué.");
-      setImporting(false);
-    }
-  }
+  useEffect(() => {
+    if (!best) return;
+    getResume(best.id)
+      .then((full) => setBreakdown(full.scoreBreakdown))
+      .catch(() => setBreakdown(null));
+  }, [best]);
+
+  const todos = buildTodos(resumes);
+  const recent = (resumes || []).slice(0, 3);
 
   return (
-    <div className="max-w-6xl">
-      <motion.div
-        initial="hidden"
-        animate="show"
-        custom={0}
-        variants={fadeUp}
-        className="flex items-start justify-between gap-4 mb-8 flex-wrap"
-      >
-        <div className="flex items-center gap-4">
-          <BrandOrb size={72} className="hidden sm:block shrink-0 drop-shadow-[0_8px_24px_var(--violet-glow)]" />
-          <div>
-            <h1 className="text-2xl font-bold">Bonjour {user?.name?.split(" ")[0]} 👋</h1>
-            <p className="text-[var(--text-dim)] text-sm mt-1">Créez un CV optimisé et maximisez vos chances d'être recruté.</p>
-          </div>
+    <div className="max-w-[1080px] mx-auto flex flex-col gap-7">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-2 min-w-0">
+          <h1 className="font-black leading-[1.15] m-0" style={{ fontFamily: "var(--t-display)", fontSize: "clamp(28px,3vw,36px)" }}>
+            Bonjour {user?.name?.split(" ")[0]}
+          </h1>
+          <p className="m-0 text-base leading-[1.55] max-w-[62ch]" style={{ color: "var(--t-ink2)" }}>
+            {best
+              ? `Votre CV principal est à ${best.ats_score} sur 100. ${
+                  todos[0] ? "Une action suffit pour l'améliorer." : "Continuez comme ça."
+                }`
+              : "Créez votre premier CV optimisé pour les systèmes de recrutement automatisés."}
+          </p>
         </div>
-        <button onClick={() => navigate("/cv/nouveau")} className={btnPrimaryCls}>
-          <IconPlusCircle className="w-4 h-4" />
+        <button
+          type="button"
+          onClick={() => navigate("/cv/nouveau")}
+          className="inline-flex items-center justify-center gap-2 min-h-11 px-[18px] rounded-[var(--t-r-md)] font-semibold text-[15px] cursor-pointer"
+          style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)", boxShadow: "0 2px 0 var(--t-shadow)" }}
+        >
+          <IconPlusCircle className="w-[18px] h-[18px]" />
           Nouveau CV
         </button>
-      </motion.div>
+      </header>
 
-      {error && <p className="text-sm text-[var(--danger)] mb-6">{error}</p>}
+      {error && <p style={{ color: "var(--t-danger)" }}>{error}</p>}
 
-      <motion.div initial="hidden" animate="show" custom={1} variants={fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {QUICK_ACTIONS.map((a) => (
-          <Link
-            key={a.to}
-            to={a.to}
-            className={`${cardCls} group flex flex-col gap-2.5 p-4 hover:border-[var(--violet-soft)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_var(--violet-glow)]`}
-          >
-            <span className="w-9 h-9 rounded-lg bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center group-hover:scale-105 transition-transform">
-              <a.icon className="w-[18px] h-[18px]" />
-            </span>
-            <span>
-              <span className="text-sm font-medium block">{a.label}</span>
-              <span className="text-[11px] text-[var(--text-faint)] block mt-0.5">{a.desc}</span>
-            </span>
-          </Link>
-        ))}
-      </motion.div>
-
-      <motion.div
-        initial="hidden"
-        animate="show"
-        custom={1.5}
-        variants={fadeUp}
-        className={`${cardCls} flex items-start gap-3 p-4 mb-6`}
-      >
-        <span className="shrink-0 w-8 h-8 rounded-lg bg-[var(--warn)]/12 text-[var(--warn)] grid place-items-center">
-          <IconBulb className="w-4 h-4" />
-        </span>
-        <div>
-          <p className="text-xs font-[var(--ff-mono)] uppercase tracking-widest text-[var(--text-faint)] mb-1">Conseil du jour</p>
-          <p className="text-sm text-[var(--text-dim)] leading-relaxed">{tipOfTheDay()}</p>
-        </div>
-      </motion.div>
-
-      <motion.div initial="hidden" animate="show" custom={2} variants={fadeUp} className="grid lg:grid-cols-2 gap-4 mb-6">
-        <div className={`${cardCls} p-5`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold">Mes CV récents</h2>
-            <Link to="/cv" className="text-xs text-[var(--violet-soft)] hover:underline">
-              Voir tous mes CV
-            </Link>
-          </div>
-          {resumes && resumes.length === 0 && (
-            <div className="flex flex-col items-center text-center py-8 gap-3">
-              <span className="w-11 h-11 rounded-full bg-[var(--violet-glow)] text-[var(--violet-soft)] grid place-items-center">
-                <IconPlusCircle className="w-5 h-5" />
-              </span>
-              <div>
-                <p className="text-sm">Aucun CV pour l'instant.</p>
-                <p className="text-xs text-[var(--text-faint)] mt-0.5">Créez le premier en quelques minutes.</p>
-              </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-1">
-            {(resumes || []).slice(0, 4).map((r) => (
-              <Link
-                key={r.id}
-                to={`/cv/${r.id}`}
-                className="flex items-center justify-between gap-3 px-2 py-2.5 rounded-lg hover:bg-[var(--surface-2)] hover:translate-x-0.5 transition-all"
+      <div className="grid gap-5 items-start" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
+        <section
+          aria-labelledby="todo-h"
+          className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-4 min-w-0"
+          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+        >
+          <h2 id="todo-h" className="font-black text-xl leading-tight m-0" style={{ fontFamily: "var(--t-display)" }}>
+            À faire
+          </h2>
+          <ol className="list-none m-0 p-0 flex flex-col">
+            {todos.map((td, i) => (
+              <li
+                key={td.title}
+                className="flex items-center gap-3.5 py-3"
+                style={{ borderTop: i === 0 ? "none" : "1px solid var(--t-line-soft)" }}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className="w-9 h-9 rounded-full grid place-items-center text-xs font-[var(--ff-mono)] font-semibold shrink-0"
-                    style={{
-                      border: `2px solid ${r.ats_score != null ? ringColor[scoreTone(r.ats_score)] : "var(--border)"}`,
-                      color: r.ats_score != null ? ringColor[scoreTone(r.ats_score)] : "var(--text-faint)",
-                    }}
-                  >
-                    {r.ats_score ?? "—"}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{r.title}</p>
-                    <p className="text-xs text-[var(--text-faint)]">
-                      Modifié le {new Date(r.updated_at).toLocaleDateString("fr-FR")}
-                    </p>
+                <span
+                  aria-hidden="true"
+                  className="w-[30px] h-[30px] rounded-full grid place-items-center font-bold text-sm shrink-0"
+                  style={{ background: "var(--t-accent-soft)", color: "var(--t-accent-ink)" }}
+                >
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-[15px]">{td.title}</div>
+                  <div className="text-[13px]" style={{ color: "var(--t-muted)" }}>
+                    {td.hint}
                   </div>
                 </div>
-              </Link>
+                <Link
+                  to={td.to}
+                  aria-label={`${td.cta} : ${td.title}`}
+                  className="inline-flex items-center justify-center gap-2 min-h-10 px-3.5 rounded-[var(--t-r-md)] font-semibold text-sm"
+                  style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-surface)", color: "var(--t-ink)" }}
+                >
+                  {td.cta}
+                </Link>
+              </li>
             ))}
-          </div>
-        </div>
+          </ol>
+        </section>
 
-        <div
-          onDragOver={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={(e: DragEvent) => {
-            e.preventDefault();
-            setDragOver(false);
-            const file = e.dataTransfer.files?.[0];
-            if (file) handleFile(file);
-          }}
-          className={`${cardCls} p-5 flex flex-col`}
+        <section
+          aria-labelledby="score-h"
+          className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-4 min-w-0"
+          style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
         >
-          <h2 className="text-sm font-semibold mb-4">Analyse rapide</h2>
-          <div
-            onClick={() => !importing && inputRef.current?.click()}
-            className={`flex-1 border-2 border-dashed rounded-xl px-6 py-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-150 ${
-              dragOver ? "border-[var(--violet-soft)] bg-[var(--violet-glow)] scale-[1.01]" : "border-[var(--border)] hover:border-[var(--text-faint)]"
-            }`}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".pdf,.docx"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFile(file);
-                e.target.value = "";
-              }}
-            />
-            <IconUpload className="w-6 h-6 text-[var(--text-faint)] mb-3" />
-            <p className="text-sm mb-1">Importez votre CV pour l'analyser</p>
-            <p className="text-xs text-[var(--text-faint)] mb-4">Glissez-déposez votre fichier ici, ou</p>
-            <span className="inline-flex items-center gap-2 bg-[var(--violet)] rounded-lg px-4 py-2 text-xs font-medium text-white shadow-[0_2px_12px_-2px_var(--violet-glow)]">
-              {importing ? "Import en cours..." : "Choisir un fichier"}
-            </span>
-            <p className="text-[11px] text-[var(--text-faint)] mt-4">Formats acceptés : PDF, DOCX</p>
+          <div className="flex justify-between items-baseline gap-3">
+            <h2 id="score-h" className="font-black text-xl leading-tight m-0" style={{ fontFamily: "var(--t-display)" }}>
+              Score ATS
+            </h2>
+            {best && (
+              <span className="text-[13px] truncate" style={{ color: "var(--t-muted)" }}>
+                {best.title}
+              </span>
+            )}
           </div>
-        </div>
-      </motion.div>
+          {best ? (
+            <>
+              <div className="flex flex-wrap gap-[22px] items-center">
+                <div
+                  role="img"
+                  aria-label={`Score ATS : ${best.ats_score} sur 100`}
+                  className="w-[120px] h-[120px] rounded-full grid place-items-center shrink-0"
+                  style={{ background: `conic-gradient(var(--t-accent) ${((best.ats_score ?? 0) / 100) * 360}deg, var(--t-track) 0)` }}
+                >
+                  <div className="w-[94px] h-[94px] rounded-full grid place-items-center text-center" style={{ background: "var(--t-surface)" }}>
+                    <div>
+                      <div className="font-black text-4xl leading-none" style={{ fontFamily: "var(--t-display)" }}>
+                        {best.ats_score}
+                      </div>
+                      <div className="text-xs" style={{ color: "var(--t-muted)" }}>
+                        sur 100
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {breakdown && (
+                  <div className="flex-1 flex flex-col gap-3 min-w-[180px]">
+                    {[
+                      ["Mots-clés", breakdown.keywords],
+                      ["Structure", breakdown.structure],
+                      ["Lisibilité", breakdown.readability],
+                    ].map(([label, v]) => (
+                      <div key={label} className="flex flex-col gap-1.5">
+                        <div className="flex justify-between text-[15px]">
+                          <span>{label}</span>
+                          <span className="font-semibold">{v}</span>
+                        </div>
+                        <div aria-hidden="true" className="h-2 rounded overflow-hidden" style={{ background: "var(--t-track)" }}>
+                          <div className="h-full" style={{ width: `${v}%`, background: "var(--t-accent)" }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Link to="/analyse" className="self-start font-semibold text-[15px] underline underline-offset-[3px]" style={{ color: "var(--t-accent)" }}>
+                Voir l'analyse complète
+              </Link>
+            </>
+          ) : (
+            <p className="text-sm" style={{ color: "var(--t-muted)" }}>
+              Créez un CV pour voir apparaître son score ATS ici.
+            </p>
+          )}
+        </section>
+      </div>
 
-      <motion.div initial="hidden" animate="show" custom={3} variants={fadeUp} className={`${cardCls} p-5`}>
-        <h2 className="text-sm font-semibold mb-4">Vos statistiques</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat label="CV créés" value={resumes ? String(resumes.length) : "—"} />
-          <Stat label="Score moyen" value={avgScore != null ? `${avgScore}/100` : "—"} tone={avgScore != null ? scoreTone(avgScore) : undefined} />
-          <Stat label="Meilleur score" value={bestScore != null ? `${bestScore}/100` : "—"} tone={bestScore != null ? scoreTone(bestScore) : undefined} />
-          <Stat label="Analyses" value={resumes ? String(scored.length) : "—"} />
+      <section
+        aria-labelledby="recent-h"
+        className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-4 min-w-0"
+        style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
+      >
+        <div className="flex justify-between items-center gap-3">
+          <h2 id="recent-h" className="font-black text-xl leading-tight m-0" style={{ fontFamily: "var(--t-display)" }}>
+            CV récents
+          </h2>
+          <Link to="/cv" className="font-semibold text-[15px] underline underline-offset-[3px]" style={{ color: "var(--t-accent)" }}>
+            Tous les CV
+          </Link>
         </div>
-      </motion.div>
-    </div>
-  );
-}
+        {recent.length === 0 ? (
+          <p className="text-sm py-4" style={{ color: "var(--t-muted)" }}>
+            Aucun CV pour l'instant.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[15px]" style={{ minWidth: 480 }}>
+              <caption className="sr-only">Vos CV les plus récents</caption>
+              <thead>
+                <tr>
+                  {["Nom", "Modifié", "Score", ""].map((h) => (
+                    <th
+                      key={h}
+                      scope="col"
+                      className="text-left py-2.5 px-3 font-semibold text-xs uppercase"
+                      style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.1em", color: "var(--t-muted)", borderBottom: "1px solid var(--t-line-soft)" }}
+                    >
+                      {h || <span className="sr-only">Action</span>}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((r) => (
+                  <tr key={r.id}>
+                    <th scope="row" className="text-left font-semibold py-3.5 px-3" style={{ borderBottom: "1px solid var(--t-line-soft)" }}>
+                      {r.title}
+                    </th>
+                    <td className="py-3.5 px-3" style={{ borderBottom: "1px solid var(--t-line-soft)", color: "var(--t-ink2)" }}>
+                      {new Date(r.updated_at).toLocaleDateString("fr-FR")}
+                    </td>
+                    <td className="py-3.5 px-3" style={{ borderBottom: "1px solid var(--t-line-soft)" }}>
+                      {r.ats_score != null && (
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[var(--t-r-pill)] font-semibold text-[13px] whitespace-nowrap"
+                          style={{ background: "var(--t-accent-soft)", color: "var(--t-accent-ink)" }}
+                        >
+                          {r.ats_score}
+                          <span className="font-normal"> / 100</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-3 text-right" style={{ borderBottom: "1px solid var(--t-line-soft)" }}>
+                      <Link
+                        to={`/cv/${r.id}`}
+                        aria-label={`Ouvrir ${r.title}`}
+                        className="inline-flex items-center min-h-10 font-semibold text-[15px] underline underline-offset-[3px]"
+                        style={{ color: "var(--t-accent)" }}
+                      >
+                        Ouvrir
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" | "danger" }) {
-  return (
-    <div className="bg-[var(--surface-2)] border border-[var(--border)] rounded-xl px-4 py-4 hover:border-[var(--text-faint)] transition-colors">
-      <p className="text-xs text-[var(--text-faint)] mb-2">{label}</p>
-      <p className="font-[var(--ff-mono)] text-xl font-medium" style={tone ? { color: ringColor[tone] } : undefined}>
-        {value}
-      </p>
+      <section
+        aria-labelledby="tip-h"
+        className="p-6 rounded-[var(--t-r-lg)] flex flex-col items-center gap-3.5 text-center"
+        style={{ background: "var(--t-note)", border: "1px solid var(--t-line-soft)" }}
+      >
+        <div
+          className="w-full rounded-[var(--t-r-md)] overflow-hidden"
+          style={{ maxWidth: 560, aspectRatio: "16/9", border: "1px solid var(--t-line-soft)", background: "var(--t-surface)" }}
+        >
+          <OfficeVignette themeId={theme} />
+        </div>
+        <h2
+          id="tip-h"
+          className="font-semibold text-xs uppercase m-0"
+          style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.14em", color: "var(--t-warn-ink)", marginTop: 4 }}
+        >
+          Conseil du jour
+        </h2>
+        <p className="m-0 text-lg leading-[1.5]" style={{ maxWidth: "46ch", textWrap: "balance" }}>
+          {tipOfTheDay()}
+        </p>
+      </section>
     </div>
   );
 }

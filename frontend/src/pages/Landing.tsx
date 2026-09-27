@@ -3,17 +3,10 @@ import { Link } from "react-router-dom";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { createOffice, CHAPTERS } from "../three/office-scene.js";
-import { ROOM3D, themeName as readThemeName } from "../three/theme3d.js";
+import { ROOM3D } from "../three/theme3d.js";
+import { useTheme3D, THEME3D_META } from "../lib/theme3d.ts";
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
-
-const THEME_LABELS: Record<string, string> = {
-  ghibli: "Ghibli",
-  cyber: "Cyberpunk",
-  tech: "Tech dark",
-  vinyle: "Vinyle",
-};
-const THEME_NAMES = Object.keys(ROOM3D);
 
 function Office({ themeId, onAction }: { themeId: string; onAction: (a: string) => void }) {
   const office = useMemo(() => createOffice(THREE), []);
@@ -84,20 +77,8 @@ function Office({ themeId, onAction }: { themeId: string; onAction: (a: string) 
 }
 
 export default function Landing() {
-  const [themeId, setThemeId] = useState<string>(() => {
-    const n = readThemeName();
-    return ROOM3D[n] ? n : "ghibli";
-  });
+  const { theme: themeId, setTheme: setThemeId } = useTheme3D();
   const [chapter, setChapter] = useState(0);
-  const t = ROOM3D[themeId].ui;
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("atsme-theme", themeId);
-    } catch {
-      /* stockage indisponible (navigation privée) — le thème reste en mémoire pour cette visite */
-    }
-  }, [themeId]);
 
   useEffect(() => {
     function onScroll() {
@@ -123,15 +104,15 @@ export default function Landing() {
   }
 
   return (
-    <div style={{ background: t.bg, color: t.ink }}>
+    <div style={{ background: "var(--t-bg)", color: "var(--t-ink)" }}>
       <a
         href="#contenu"
         style={{
           position: "absolute",
           left: 8,
           top: -60,
-          background: t.accent,
-          color: t.accentInk,
+          background: "var(--t-accent)",
+          color: "var(--t-accent-ink)",
           padding: "10px 16px",
           borderRadius: 8,
           zIndex: 50,
@@ -171,7 +152,7 @@ export default function Landing() {
             pointerEvents: "none",
           }}
         >
-          <span style={{ fontWeight: 800, fontSize: 18, color: t.ink, pointerEvents: "auto" }}>ATSme</span>
+          <span style={{ fontWeight: 800, fontSize: 18, color: "var(--t-ink)", pointerEvents: "auto" }}>ATSme</span>
           <div style={{ display: "flex", gap: 10, pointerEvents: "auto" }}>
             <Link
               to="/connexion"
@@ -180,9 +161,9 @@ export default function Landing() {
                 borderRadius: 10,
                 fontSize: 14,
                 fontWeight: 600,
-                color: t.ink,
-                background: t.side,
-                border: `1px solid ${t.track}`,
+                color: "var(--t-ink)",
+                background: "var(--t-surface)",
+                border: "1px solid var(--t-track)",
               }}
             >
               Se connecter
@@ -194,8 +175,8 @@ export default function Landing() {
                 borderRadius: 10,
                 fontSize: 14,
                 fontWeight: 600,
-                color: t.accentInk,
-                background: t.accent,
+                color: "var(--t-accent-ink)",
+                background: "var(--t-accent)",
               }}
             >
               Créer un compte
@@ -213,10 +194,10 @@ export default function Landing() {
             pointerEvents: "none",
           }}
         >
-          <p style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: t.dim, margin: 0 }}>
+          <p style={{ fontSize: 12, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--t-muted)", margin: 0 }}>
             Chapitre {chapter + 1} / {CHAPTERS.length}
           </p>
-          <h1 style={{ fontSize: "clamp(28px, 4vw, 44px)", margin: "4px 0 0", color: t.ink }}>{CHAPTERS[chapter].label}</h1>
+          <h1 style={{ fontSize: "clamp(28px, 4vw, 44px)", margin: "4px 0 0", color: "var(--t-ink)" }}>{CHAPTERS[chapter].label}</h1>
         </div>
 
         {/* Points de navigation entre chapitres */}
@@ -243,7 +224,7 @@ export default function Landing() {
                 borderRadius: 999,
                 border: "none",
                 cursor: "pointer",
-                background: i === chapter ? t.accent : t.track,
+                background: i === chapter ? "var(--t-accent)" : "var(--t-track)",
               }}
             />
           ))}
@@ -258,27 +239,27 @@ export default function Landing() {
             display: "flex",
             gap: 8,
             zIndex: 20,
-            background: t.side,
+            background: "var(--t-surface)",
             padding: 6,
             borderRadius: 999,
-            border: `1px solid ${t.track}`,
+            border: "1px solid var(--t-track)",
           }}
         >
-          {THEME_NAMES.map((name) => (
+          {THEME3D_META.map(({ id, label, swatch }) => (
             <button
-              key={name}
+              key={id}
               type="button"
-              onClick={() => setThemeId(name)}
-              aria-label={THEME_LABELS[name] ?? name}
-              aria-pressed={name === themeId}
-              title={THEME_LABELS[name] ?? name}
+              onClick={() => setThemeId(id)}
+              aria-label={label}
+              aria-pressed={id === themeId}
+              title={label}
               style={{
                 width: 22,
                 height: 22,
                 borderRadius: "50%",
                 cursor: "pointer",
-                background: ROOM3D[name].ui.accent,
-                border: name === themeId ? `2px solid ${t.ink}` : "2px solid transparent",
+                background: swatch,
+                border: id === themeId ? "2px solid var(--t-ink)" : "2px solid transparent",
               }}
             />
           ))}
