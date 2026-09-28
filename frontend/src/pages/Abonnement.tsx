@@ -161,7 +161,7 @@ export default function Abonnement() {
         className="px-[18px] py-3.5 rounded-[var(--t-r-md)] font-semibold text-[15px]"
         style={{ background: "var(--t-accent-soft)", color: "var(--t-accent-ink)", border: "1px solid var(--t-accent-line)" }}
       >
-        Le paiement en ligne n'est pas encore activé sur ATSme — cette page montre à quoi ressemblera l'achat de crédits et l'offre Pro.
+        Le paiement en ligne n'est pas encore activé sur ATSme. Cette page montre à quoi ressemblera l'achat de crédits et l'offre Pro.
       </div>
 
       <div className="grid gap-5 items-stretch" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
@@ -308,7 +308,7 @@ export default function Abonnement() {
             Exemples de CV exportés
           </h2>
           <p className="m-0 text-[15px]" style={{ color: "var(--t-ink2)" }}>
-            Aperçu de rendu — ces trois profils sont fictifs, à titre d'exemple.
+            Aperçu de rendu, avec trois profils fictifs à titre d'exemple.
           </p>
         </div>
         <ul className="list-none m-0 p-0 grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
@@ -404,7 +404,7 @@ export default function Abonnement() {
                   {EXAMPLES[open].experience.map((exp) => (
                     <div key={exp.role}>
                       <p className="font-semibold text-sm m-0">
-                        {exp.role} — {exp.company} <span style={{ color: "var(--t-muted)" }}>· {exp.dates}</span>
+                        {exp.role} · {exp.company} <span style={{ color: "var(--t-muted)" }}>· {exp.dates}</span>
                       </p>
                       <ul className="list-disc pl-5 text-sm mt-1" style={{ color: "var(--t-ink2)" }}>
                         {exp.bullets.map((b) => (
@@ -419,7 +419,7 @@ export default function Abonnement() {
                 <h3 className="text-xs font-bold uppercase mb-2" style={{ fontFamily: "var(--t-mono)", letterSpacing: "0.1em", color: "var(--t-muted)" }}>
                   Compétences
                 </h3>
-                <p className="text-sm m-0">{EXAMPLES[open].skills.map((s) => `${s.group} : ${s.items}`).join(" — ")}</p>
+                <p className="text-sm m-0">{EXAMPLES[open].skills.map((s) => `${s.group} : ${s.items}`).join("  ·  ")}</p>
               </div>
             </div>
           </div>

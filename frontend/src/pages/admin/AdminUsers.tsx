@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { type AdminUser, isOnline, listAdminUsers } from "../../lib/adminApi";
+import { type AdminUser, type Plan, PLANS, isOnline, listAdminUsers, updateUserPlan } from "../../lib/adminApi";
+
+const PLAN_LABELS: Record<Plan, string> = { free: "Free", pro: "Pro", premium: "Premium", entreprise: "Entreprise" };
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<number | null>(null);
 
   useEffect(() => {
     listAdminUsers()
@@ -18,6 +21,21 @@ export default function AdminUsers() {
     if (!q) return users;
     return users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
   }, [users, query]);
+
+  async function onChangePlan(userId: number, plan: Plan) {
+    const previous = users;
+    setError(null);
+    setSavingId(userId);
+    setUsers((list) => list && list.map((u) => (u.id === userId ? { ...u, plan } : u)));
+    try {
+      await updateUserPlan(userId, plan);
+    } catch {
+      setUsers(previous || null);
+      setError("Le changement d'offre a échoué.");
+    } finally {
+      setSavingId(null);
+    }
+  }
 
   return (
     <div className="max-w-5xl flex flex-col gap-6">
@@ -49,7 +67,7 @@ export default function AdminUsers() {
 
       {filtered && (
         <div className="overflow-auto rounded-[var(--t-r-lg)]" style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}>
-          <table className="w-full border-collapse text-sm" style={{ minWidth: 640 }}>
+          <table className="w-full border-collapse text-sm" style={{ minWidth: 680 }}>
             <thead>
               <tr style={{ background: "var(--t-bg)", textAlign: "left" }}>
                 {["Utilisateur", "Statut", "Offre", "CV", "Score moyen", "Inscrit le"].map((h) => (
@@ -99,18 +117,29 @@ export default function AdminUsers() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className="inline-flex px-2.5 py-1 rounded-[var(--t-r-pill)] font-semibold text-[13px] capitalize"
-                        style={{ background: "var(--t-accent-soft)", color: "var(--t-accent-ink)" }}
+                      <label className="sr-only" htmlFor={`plan-${u.id}`}>
+                        Offre de {u.name}
+                      </label>
+                      <select
+                        id={`plan-${u.id}`}
+                        value={u.plan}
+                        disabled={savingId === u.id}
+                        onChange={(e) => onChangePlan(u.id, e.target.value as Plan)}
+                        className="min-h-9 pl-2.5 pr-7 rounded-[var(--t-r-pill)] font-semibold text-[13px] outline-none cursor-pointer disabled:opacity-60"
+                        style={{ background: "var(--t-accent-soft)", color: "var(--t-accent-ink)", border: "1px solid var(--t-accent-line)" }}
                       >
-                        {u.plan}
-                      </span>
+                        {PLANS.map((p) => (
+                          <option key={p} value={p}>
+                            {PLAN_LABELS[p]}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="py-3 px-4" style={{ fontFamily: "var(--t-mono)" }}>
                       {u.resumeCount}
                     </td>
                     <td className="py-3 px-4" style={{ fontFamily: "var(--t-mono)" }}>
-                      {u.avgScore != null ? `${u.avgScore}/100` : "—"}
+                      {u.avgScore != null ? `${u.avgScore}/100` : "-"}
                     </td>
                     <td className="py-3 px-4 text-xs" style={{ color: "var(--t-muted)" }}>
                       {new Date(u.created_at).toLocaleDateString("fr-FR")}

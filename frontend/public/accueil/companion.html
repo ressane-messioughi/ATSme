@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATSme — compagnon 3D</title>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>html{color-scheme:light}html,body{margin:0;height:100%;background:transparent;overflow:hidden}canvas{display:block;width:100%;height:100%}</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { toonGradient, addOutlines } from './accueil/office-scene.js';
+import { THEMES3D, themeName, paintScene } from './accueil/theme3d.js';
+const kind = new URLSearchParams(location.search).get('o') || 'cat';
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+const hemi = new THREE.HemisphereLight(0xdff0ff, 0xc9b58a, 1.8); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe2b0, 2.4); sun.position.set(-1, 2, 2); scene.add(sun);
+const grad = toonGradient(THREE);
+const T = (name, color, extra = {}) => Object.assign(new THREE.MeshToonMaterial({ color, gradientMap: grad, ...extra }), { name });
+const add = (name, geo, m, parent) => { const o = new THREE.Mesh(geo, m); o.name = name; parent.add(o); return o; };
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 20);
+const root = new THREE.Group(); scene.add(root);
+let tick = () => {};
+
+if (kind === 'cat') {
+  const fur = T('cat', '#e8913f'), cream = T('catLight', '#fff1dc'), ink = T('eye', '#2a1d16');
+  const body = add('catBody', new THREE.SphereGeometry(0.1, 32, 24), fur, root); body.scale.set(1.25, 0.7, 1); body.position.y = 0.07;
+  const head = new THREE.Group(); head.position.set(-0.1, 0.07, 0.06); root.add(head);
+  add('catHead', new THREE.SphereGeometry(0.066, 32, 24), fur, head).scale.set(1.1, 0.92, 1);
+  add('catMuzzle', new THREE.SphereGeometry(0.028, 16, 12), cream, head).position.set(-0.01, -0.018, 0.052);
+  const ears = [-1, 1].map(s => { const e = add('catEar', new THREE.ConeGeometry(0.022, 0.048, 4), fur, head); e.position.set(s * 0.04, 0.058, -0.005); e.rotation.z = -s * 0.35; return e; });
+  [-1, 1].forEach(s => { const lid = add('catEyeClosed', new THREE.TorusGeometry(0.011, 0.0035, 6, 12, Math.PI), ink, head); lid.position.set(s * 0.026 - 0.005, 0.008, 0.06); lid.rotation.z = Math.PI; });
+  add('catPaw', new THREE.SphereGeometry(0.026, 12, 12), cream, root).position.set(-0.07, 0.02, 0.1);
+  const tailG = new THREE.Group(); tailG.position.set(0.1, 0.025, 0); root.add(tailG);
+  const curve = new THREE.CatmullRomCurve3([[0, 0, 0], [0.04, 0, 0.06], [0.01, 0, 0.12], [-0.08, 0, 0.14], [-0.15, 0, 0.12]].map(p => new THREE.Vector3(...p)));
+  add('catTail', new THREE.TubeGeometry(curve, 40, 0.02, 12), fur, tailG);
+  add('catTailTip', new THREE.SphereGeometry(0.02, 12, 12), cream, tailG).position.set(-0.15, 0, 0.12);
+  addOutlines(THREE, root, '#4a3326', 1.06);
+  camera.position.set(0.05, 0.28, 0.62); camera.lookAt(0, 0.06, 0);
+  let nextTwitch = 2;
+  tick = (t) => {
+    body.scale.y = 0.7 + Math.sin(t * 1.6) * 0.025; head.position.y = 0.07 + Math.sin(t * 1.6) * 0.003;
+    tailG.rotation.y = Math.sin(t * 0.9) * 0.08;
+    if (t > nextTwitch) { ears[1].rotation.z = 0.35 + 0.5; if (t > nextTwitch + 0.15) { ears[1].rotation.z = 0.35; nextTwitch = t + 3 + Math.random() * 4; } }
+  };
+} else if (kind === 'mug') {
+  const mugM = T('mug', '#f6efe0'), cof = T('coffee', '#6b4228'), plateM = T('paper', '#fbf5e6');
+  const g = new THREE.Group(); root.add(g);
+  add('saucer', new THREE.CylinderGeometry(0.13, 0.11, 0.015, 32), plateM, g).position.y = 0.007;
+  add('mugBody', new THREE.CylinderGeometry(0.075, 0.068, 0.15, 32), mugM, g).position.y = 0.09;
+  const top = add('coffee', new THREE.CircleGeometry(0.066, 32), cof, g); top.rotation.x = -Math.PI / 2; top.position.y = 0.166;
+  const h = add('handle', new THREE.TorusGeometry(0.042, 0.013, 12, 24, Math.PI), mugM, g); h.position.set(0.075, 0.09, 0); h.rotation.z = -Math.PI / 2;
+  addOutlines(THREE, root, '#4a3326', 1.05);
+  const puffs = Array.from({ length: 7 }, () => add('steam', new THREE.SphereGeometry(0.02, 12, 10), new THREE.MeshBasicMaterial({ color: 0xd9d2c6, transparent: true, opacity: 0.3, depthWrite: false }), g));
+  camera.position.set(0.3, 0.42, 0.98); camera.lookAt(0, 0.2, 0);
+  tick = (t) => { g.rotation.y = Math.sin(t * 0.5) * 0.25 - 0.3; puffs.forEach((s, i) => { const f = (t * 0.25 + i / 7) % 1; s.position.set(Math.sin(t * 1.2 + i * 2) * 0.025 * (0.4 + f), 0.18 + f * 0.28, Math.cos(t + i) * 0.01); s.scale.setScalar(0.8 + f * 2.4); s.material.opacity = 0.55 * Math.sin(Math.PI * f); }); };
+} else if (kind === 'medal') {
+  const gold = T('bell', '#e8c14a'), acc = T('notebook', '#4f7f52'), rib = T('pot', '#c77b52'), rimM = T('outline', '#4a3326');
+  const g = new THREE.Group(); root.add(g);
+  [-1, 1].forEach(s => { const sh = new THREE.Shape(); sh.moveTo(-0.035, 0); sh.lineTo(0.035, 0); sh.lineTo(0.035, 0.2); sh.lineTo(0, 0.17); sh.lineTo(-0.035, 0.2); sh.closePath(); const m = add('ribbon', new THREE.ShapeGeometry(sh), s < 0 ? acc : rib, g); m.material.side = THREE.DoubleSide; m.position.set(s * 0.028, 0.03, s < 0 ? -0.02 : -0.028); m.rotation.z = s * 0.3; });
+  const face = (r, z, m, name) => { const d = add(name, new THREE.CylinderGeometry(r, r, 0.02, 48), m, g); d.rotation.x = Math.PI / 2; d.position.z = z; return d; };
+  face(0.118, -0.002, rimM, 'medalRim'); face(0.108, 0, gold, 'medal'); face(0.078, 0.004, acc, 'medalInner');
+  const st = new THREE.Shape(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 0.026 : 0.058, an = i / 10 * Math.PI * 2 + Math.PI / 2; const px = Math.cos(an) * r, py = Math.sin(an) * r; if (i) st.lineTo(px, py); else st.moveTo(px, py); } st.closePath();
+  const star = add('medalStar', new THREE.ShapeGeometry(st), gold, g); star.position.z = 0.0155;
+  camera.position.set(0, 0.06, 0.78); camera.lookAt(0, 0.07, 0);
+  tick = (t) => { g.rotation.y = Math.sin(t * 0.8) * 0.35; g.position.y = Math.sin(t * 1.4) * 0.008; };
+} else {
+  const paper = T('paper', '#fbf5e6', { side: THREE.DoubleSide }), fold = T('paperFold', '#e9dcc0', { side: THREE.DoubleSide });
+  const plane = new THREE.Group(); root.add(plane);
+  [-1, 1].forEach(s => { const sh = new THREE.Shape(); sh.moveTo(0.12, 0); sh.lineTo(-0.08, s * 0.085); sh.lineTo(-0.05, 0); sh.lineTo(0.12, 0); const g = new THREE.Group(); g.rotation.x = s * 0.22; plane.add(g); const m = add('wing', new THREE.ShapeGeometry(sh), paper, g); m.rotation.x = -Math.PI / 2; });
+  const kl = new THREE.Shape(); kl.moveTo(0.12, 0); kl.lineTo(-0.05, -0.03); kl.lineTo(-0.05, 0); kl.lineTo(0.12, 0);
+  add('keel', new THREE.ShapeGeometry(kl), fold, plane);
+  plane.traverse(o => { if (o.isMesh) { const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry), new THREE.LineBasicMaterial({ color: '#4a3326', name: 'edge' })); o.add(e); } });
+  plane.scale.setScalar(2.6);
+  camera.position.set(0, 0, 2.2); camera.lookAt(0, 0, 0);
+  plane.visible = false; let flyT = -1;
+  addEventListener('message', e => { if ((e.data || {}).type === 'fly' && !still) { flyT = 0; plane.visible = true; } });
+  tick = (t, dt) => {
+    if (flyT < 0) return;
+    flyT += dt / 2.6; if (flyT >= 1) { flyT = -1; plane.visible = false; return; }
+    const a = camera.aspect, span = 0.78 * a + 0.3, u = flyT;
+    plane.position.set(span - u * span * 2, Math.sin(u * Math.PI * 2) * 0.1, 0);
+    const w = Math.cos(u * Math.PI * 2);
+    plane.rotation.set(1.05 + w * 0.3, Math.PI + 0.15, w * 0.18);
+  };
+}
+
+function applyTheme(name) { const P = THEMES3D[name] || THEMES3D.ghibli; paintScene(scene, P); hemi.color.set(P.hemiSky); hemi.groundColor.set(P.hemiGround); sun.color.set(P.sun); }
+applyTheme(themeName());
+addEventListener('message', e => { if ((e.data || {}).type === 'theme') applyTheme(e.data.theme); });
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+let t = 0, last = performance.now();
+function frame(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (!still) t += dt; tick(t, dt); renderer.render(scene, camera); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

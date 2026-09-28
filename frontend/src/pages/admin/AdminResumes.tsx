@@ -89,7 +89,7 @@ export default function AdminResumes() {
               </div>
               <div className="flex items-center gap-4 shrink-0">
                 <span className="text-sm font-semibold" style={{ fontFamily: "var(--t-mono)", color: TONE_COLOR[scoreTone(r.ats_score)] }}>
-                  {r.ats_score != null ? `${r.ats_score}/100` : "—"}
+                  {r.ats_score != null ? `${r.ats_score}/100` : "-"}
                 </span>
                 <div className="flex items-center gap-2">
                   {r.hasOriginal && (

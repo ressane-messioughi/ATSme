@@ -37,13 +37,20 @@ export default function CookieBanner() {
             color: "var(--t-ink)",
           }}
         >
+          <iframe
+            src="/accueil/companion.html?o=cat"
+            title=""
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ width: 72, height: 72, border: 0, flex: "none", pointerEvents: "none" }}
+          />
           <div className="flex-1 min-w-[220px]">
             <p className="font-black text-base m-0" style={{ fontFamily: "var(--t-display)" }}>
               Aucun cookie de suivi
             </p>
             <p className="text-sm mt-1.5 mb-0" style={{ color: "var(--t-ink2)" }}>
               ATSme ne dépose ni cookie publicitaire ni traceur tiers. Sur votre appareil, nous gardons seulement de
-              quoi vous garder connecté·e (essentiel) et retenir vos préférences — thème, dernier modèle choisi
+              quoi vous garder connecté·e (essentiel) et retenir vos préférences : thème, dernier modèle choisi
               (confort). La page charge aussi ses polices d'écriture depuis Google Fonts, une requête tierce classique
               au chargement.{" "}
               <Link to="/confidentialite" className="font-semibold underline underline-offset-[3px]" style={{ color: "var(--t-accent)" }}>

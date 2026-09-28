@@ -39,7 +39,7 @@ export default function AdminDashboard() {
       </section>
 
       <p className="text-xs" style={{ color: "var(--t-muted)" }}>
-        Le statut « en ligne » reflète une activité authentifiée réelle dans les 5 dernières minutes — jamais simulé.
+        Le statut « en ligne » reflète une activité authentifiée réelle dans les 5 dernières minutes, jamais simulé.
       </p>
     </div>
   );
@@ -58,7 +58,7 @@ function Stat({ label, value, accent, sub }: { label: string; value: string | nu
         {label}
       </div>
       <div className="font-black text-[34px]" style={{ fontFamily: "var(--t-display)", color: accent ? "var(--t-accent)" : "var(--t-ink)" }}>
-        {value ?? "—"}
+        {value ?? "-"}
       </div>
       {sub && (
         <div className="text-[13px]" style={{ color: "var(--t-muted)" }}>

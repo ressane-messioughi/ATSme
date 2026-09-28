@@ -104,7 +104,7 @@ export default function History() {
                 />
                 <div className="flex-1 min-w-0">
                   <Link to={`/cv/${ev.resumeId}`} className="font-semibold text-[15px] hover:underline">
-                    {ev.label || "Version enregistrée"} — {ev.resumeTitle}
+                    {ev.label || "Version enregistrée"} · {ev.resumeTitle}
                   </Link>
                   <div className="text-sm" style={{ color: "var(--t-ink2)" }}>
                     {ev.score != null ? `Score ${ev.score}/100` : "Score non calculé"}

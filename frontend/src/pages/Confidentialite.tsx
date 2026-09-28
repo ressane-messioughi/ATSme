@@ -17,15 +17,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const ROWS: [string, string, string][] = [
   ["Nom, email, mot de passe", "Créer votre compte et vous authentifier", "Tant que le compte existe"],
   ["Contenu de vos CV (identité, expériences, formations, compétences...)", "Générer, analyser et exporter vos documents", "Tant que le CV n'est pas supprimé"],
-  ["Photo de profil (si vous en ajoutez une à un CV)", "Affichage décorative dans l'export — jamais analysée", "Tant que le CV n'est pas supprimé"],
+  ["Photo de profil (si vous en ajoutez une à un CV)", "Affichage décorative dans l'export, jamais analysée", "Tant que le CV n'est pas supprimé"],
   ["Score ATS et recommandations calculés sur vos CV", "Vous aider à améliorer vos documents", "Tant que le CV n'est pas supprimé"],
   ["Texte d'une offre d'emploi collé pour comparaison", "Calculer la correspondance mots-clés", "Le temps du calcul, non conservé ensuite"],
 ];
 
 const LOCAL: [string, string, string][] = [
-  ["atsme_token", "Vous garder connecté·e", "Essentiel — supprimé à la déconnexion"],
-  ["atsme-theme", "Mémoriser le thème choisi (Ghibli, Cyberpunk, Tech dark, Vinyle)", "Confort — jusqu'à ce que vous le changiez"],
-  ["atsme_default_template", "Mémoriser le dernier modèle de CV choisi", "Confort — jusqu'à ce que vous le changiez"],
+  ["atsme_token", "Vous garder connecté·e", "Essentiel, supprimé à la déconnexion"],
+  ["atsme-theme", "Mémoriser le thème choisi (Ghibli, Cyberpunk, Tech dark, Vinyle)", "Confort, jusqu'à ce que vous le changiez"],
+  ["atsme_default_template", "Mémoriser le dernier modèle de CV choisi", "Confort, jusqu'à ce que vous le changiez"],
   ["atsme-cookie-consent", "Ne pas réafficher ce bandeau à chaque visite", "Jusqu'à effacement de vos données de navigation"],
 ];
 
@@ -140,7 +140,7 @@ export default function Confidentialite() {
           </p>
           <p>
             Par sécurité, votre adresse IP est utilisée quelques minutes, en mémoire seulement, pour limiter les tentatives de connexion
-            abusives (anti brute-force) — elle n'est jamais enregistrée en base de données.
+            abusives (anti brute-force), sans jamais être enregistrée en base de données.
           </p>
         </Section>
 

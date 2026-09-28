@@ -12,7 +12,7 @@ const ATS_TIPS = [
   "Un verbe d'action en début de ligne (« piloté », « conçu », « déployé ») rend chaque réalisation plus lisible, pour un ATS comme pour qui la lit ensuite.",
   "Visez 300 à 800 mots de contenu utile : assez pour matcher une offre en détail, assez court pour rester lisible d'un coup d'œil.",
   "Renseignez systématiquement entreprise, poste et dates pour chaque expérience : un champ manquant est un champ qu'un ATS ne peut pas extraire.",
-  "Une photo de profil n'affecte pas votre score ATS sur ATSme tant qu'elle reste décorative — c'est justement comme ça qu'elle est placée dans vos exports.",
+  "Une photo de profil n'affecte pas votre score ATS sur ATSme tant qu'elle reste décorative : c'est justement comme ça qu'elle est placée dans vos exports.",
 ];
 function tipOfTheDay(): string {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
@@ -31,7 +31,7 @@ function buildTodos(resumes: ResumeSummary[] | null): Todo[] {
   if (weakest && (weakest.ats_score ?? 100) < 85) {
     todos.push({
       title: `Améliorer « ${weakest.title} »`,
-      hint: `Score actuel : ${weakest.ats_score}/100 — ${scoreLabel(weakest.ats_score)}`,
+      hint: `Score actuel : ${weakest.ats_score}/100 (${scoreLabel(weakest.ats_score)})`,
       cta: "Corriger",
       to: `/cv/${weakest.id}`,
     });

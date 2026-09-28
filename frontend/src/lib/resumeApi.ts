@@ -74,7 +74,7 @@ export type ResumeSummary = {
 export type ScoredResume = Resume & { total: number; breakdown: ScoreBreakdown; recommendations: Recommendation[] };
 
 export function scoreLabel(score: number | null): string {
-  if (score == null) return "—";
+  if (score == null) return "-";
   if (score < 40) return "Très faible";
   if (score < 60) return "Faible";
   if (score < 70) return "Moyen";

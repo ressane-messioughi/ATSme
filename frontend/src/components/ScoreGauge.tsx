@@ -43,7 +43,7 @@ export default function ScoreGauge({
             className="font-bold"
             style={{ fontFamily: "var(--t-display)", fontSize: size * 0.28, color: score != null ? color : "var(--t-faint)" }}
           >
-            {score ?? "—"}
+            {score ?? "-"}
           </span>
           <span style={{ color: "var(--t-faint)", fontSize: size * 0.09 }}>/100</span>
         </div>

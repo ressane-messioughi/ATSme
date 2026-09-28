@@ -43,6 +43,14 @@ export function getAdminStats() {
 export function listAdminUsers() {
   return api<AdminUser[]>("/admin/users");
 }
+export const PLANS = ["free", "pro", "premium", "entreprise"] as const;
+export type Plan = (typeof PLANS)[number];
+export function updateUserPlan(userId: number, plan: Plan) {
+  return api<{ id: number; plan: string }>(`/admin/users/${userId}/plan`, {
+    method: "PATCH",
+    body: JSON.stringify({ plan }),
+  });
+}
 export function listAdminResumes() {
   return api<AdminResume[]>("/admin/resumes");
 }

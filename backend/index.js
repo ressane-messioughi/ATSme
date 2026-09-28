@@ -44,10 +44,24 @@ const upload = multer({
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(cors());
+// CORS restreint à l'origine réelle du site, plus localhost pour le développement (audit
+// de sécurité : `cors()` sans options renvoie Access-Control-Allow-Origin: * pour tout le
+// monde, inutilement permissif pour une API à token, sans bénéfice puisque le seul
+// consommateur légitime est atsme.ressane.fr).
+const ALLOWED_ORIGINS = [
+  "https://atsme.ressane.fr",
+  "http://localhost:5173",
+  "http://localhost:5183",
+  "http://localhost:5184",
+];
+app.use(
+  cors({
+    origin: (origin, cb) => cb(null, !origin || ALLOWED_ORIGINS.includes(origin)),
+  })
+);
 app.use(express.json({ limit: "15mb" }));
 
-const isEmail = (v) => typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const isEmail = (v) => typeof v === "string" && v.length <= 190 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 // Limiteur de débit en mémoire (process unique derrière nginx, pas de dépendance externe
 // nécessaire) — protège les routes sensibles/coûteuses contre le brute-force et l'abus.
@@ -112,19 +126,20 @@ async function saveScoredResume(id, data) {
 
 app.post("/api/auth/register", authRateLimit, async (req, res) => {
   const { email, password, name } = req.body || {};
-  if (!isEmail(email) || !password || password.length < 8 || !name) {
-    return res.status(400).json({ error: "email, mot de passe (8 caractères min) et nom requis" });
+  const trimmedName = typeof name === "string" ? name.trim().slice(0, 120) : "";
+  if (!isEmail(email) || !password || password.length < 8 || password.length > 200 || !trimmedName) {
+    return res.status(400).json({ error: "email, mot de passe (8 à 200 caractères) et nom requis" });
   }
   if (await findUserByEmail(email)) {
     return res.status(409).json({ error: "un compte existe déjà avec cet email" });
   }
-  const user = await createUser({ email, password, name });
+  const user = await createUser({ email, password, name: trimmedName });
   res.status(201).json({ token: issueToken(user), user });
 });
 
 app.post("/api/auth/login", authRateLimit, async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) return res.status(401).json({ error: "identifiants invalides" });
+  if (!email || !password || password.length > 200) return res.status(401).json({ error: "identifiants invalides" });
   const user = await findUserAndCheckPassword(email, password);
   if (!user) return res.status(401).json({ error: "identifiants invalides" });
   res.json({ token: issueToken(user), user });
@@ -146,8 +161,8 @@ app.put("/api/me", requireAuth, async (req, res) => {
 
 app.post("/api/me/password", requireAuth, authRateLimit, async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
-  if (!currentPassword || !newPassword || newPassword.length < 8) {
-    return res.status(400).json({ error: "mot de passe actuel et nouveau mot de passe (8 caractères min) requis" });
+  if (!currentPassword || !newPassword || newPassword.length < 8 || newPassword.length > 200) {
+    return res.status(400).json({ error: "mot de passe actuel et nouveau mot de passe (8 à 200 caractères) requis" });
   }
   const ok = await changePassword(req.user.sub, currentPassword, newPassword);
   if (!ok) return res.status(401).json({ error: "mot de passe actuel incorrect" });
@@ -463,6 +478,18 @@ app.get("/api/admin/users", requireAdmin, async (req, res) => {
      GROUP BY u.id ORDER BY u.created_at DESC`
   );
   res.json(rows.map((r) => ({ ...r, avgScore: r.avgScore ? Math.round(r.avgScore) : null })));
+});
+
+app.patch("/api/admin/users/:id/plan", requireAdmin, async (req, res) => {
+  const { plan } = req.body || {};
+  if (!Object.keys(PLAN_LIMITS).includes(plan)) {
+    return res.status(400).json({ error: `Offre invalide. Valeurs acceptées : ${Object.keys(PLAN_LIMITS).join(", ")}.` });
+  }
+  const userId = Number(req.params.id);
+  if (!Number.isInteger(userId)) return res.status(400).json({ error: "identifiant invalide" });
+  const [result] = await db.query("UPDATE users SET plan = ? WHERE id = ?", [plan, userId]);
+  if (result.affectedRows === 0) return res.status(404).json({ error: "utilisateur introuvable" });
+  res.json({ id: userId, plan });
 });
 
 app.get("/api/admin/resumes", requireAdmin, async (req, res) => {

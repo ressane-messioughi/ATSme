@@ -22,7 +22,7 @@ export default function CvNew() {
   async function handleFile(file: File) {
     setError(null);
     if (!ACCEPTED.test(file.name)) {
-      setError("Format non supporté — seuls les fichiers PDF et DOCX sont acceptés.");
+      setError("Format non supporté : seuls les fichiers PDF et DOCX sont acceptés.");
       setState("error");
       return;
     }

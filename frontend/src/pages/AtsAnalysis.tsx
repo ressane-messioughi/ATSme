@@ -44,7 +44,7 @@ export default function AtsAnalysis() {
   function downloadReport() {
     if (!resume) return;
     const lines = [
-      `Rapport d'analyse ATS — ${resume.title}`,
+      `Rapport d'analyse ATS : ${resume.title}`,
       `Score global : ${resume.atsScore}/100`,
       "",
       "Répartition :",
@@ -114,7 +114,7 @@ export default function AtsAnalysis() {
             >
               {resumes.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.title} ({r.ats_score ?? "—"}/100)
+                  {r.title} ({r.ats_score ?? "-"}/100)
                 </option>
               ))}
             </select>

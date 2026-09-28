@@ -155,7 +155,7 @@ export default function Settings() {
         <div className="flex items-center justify-between">
           <span className="font-semibold text-sm">{PLAN_LABELS[plan] || plan}</span>
           <span className="text-xs" style={{ fontFamily: "var(--t-mono)", color: "var(--t-ink2)" }}>
-            {resumeCount ?? "—"} / {limit === Infinity ? "∞" : limit} CV
+            {resumeCount ?? "-"} / {limit === Infinity ? "∞" : limit} CV
           </span>
         </div>
         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--t-track)" }}>

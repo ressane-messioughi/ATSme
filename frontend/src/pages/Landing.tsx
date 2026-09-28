@@ -39,7 +39,7 @@ export default function Landing() {
     <div style={{ position: "fixed", inset: 0, background: "var(--t-bg)" }}>
       <iframe
         src="/accueil/index.html?embed=1"
-        title="ATSme — accueil"
+        title="Accueil ATSme"
         onLoad={() => setTimeout(() => setReady(true), REVEAL_DELAY_MS)}
         style={{
           position: "fixed",

@@ -14,8 +14,8 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen grid place-items-center px-5 py-10" style={{ background: "var(--t-bg)", color: "var(--t-ink)" }}>
       <div style={{ width: "min(420px,100%)" }}>
-        <div className="flex items-center gap-2.5 mb-6">
-          <CatLogo size={52} />
+        <div className="flex flex-col items-center gap-2.5 mb-6">
+          <CatLogo size={96} />
           <span className="sr-only">ATSme</span>
         </div>
         <div

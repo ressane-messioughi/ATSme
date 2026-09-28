@@ -606,7 +606,7 @@ export default function CvEditor() {
               {versions.map((v) => (
                 <div key={v.id} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg hover:bg-[var(--t-field)] transition-colors">
                   <span className="text-[var(--t-ink2)] truncate pr-2">
-                    {v.label || new Date(v.created_at).toLocaleDateString("fr-FR")} · {v.ats_score ?? "—"}/100
+                    {v.label || new Date(v.created_at).toLocaleDateString("fr-FR")} · {v.ats_score ?? "-"}/100
                   </span>
                   <span className="flex items-center gap-2.5 shrink-0">
                     <button onClick={() => onRestore(v.id)} className="font-medium text-[var(--t-accent)] hover:text-[var(--t-ink)] transition-colors cursor-pointer">
@@ -750,7 +750,7 @@ function ExportModal({ resumeId, title, data, onClose }: { resumeId: number; tit
                 className="mt-0.5 accent-[var(--t-accent)] cursor-pointer"
               />
               <span>
-                <span className="text-sm block">Format compact — tient sur une seule page</span>
+                <span className="text-sm block">Format compact : tient sur une seule page</span>
                 <span className="text-xs text-[var(--t-ink2)] block mt-0.5">
                   Réduit légèrement les tailles de police et les marges si besoin. N'affecte ni votre contenu, ni votre score ATS.
                 </span>

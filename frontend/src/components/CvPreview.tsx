@@ -71,7 +71,7 @@ export default function CvPreview({ data }: { data: ResumeData }) {
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="font-semibold">
                     {e.role || "Poste"}
-                    {e.company ? ` — ${e.company}` : ""}
+                    {e.company ? ` · ${e.company}` : ""}
                   </p>
                   <p className="text-[11px] shrink-0" style={{ color: DIM }}>
                     {[e.startDate, e.endDate || "présent"].filter(Boolean).join(" – ")}
@@ -99,7 +99,7 @@ export default function CvPreview({ data }: { data: ResumeData }) {
               <div key={i} className="flex items-baseline justify-between gap-2">
                 <p className="font-medium">
                   {ed.degree}
-                  {ed.school ? ` — ${ed.school}` : ""}
+                  {ed.school ? ` · ${ed.school}` : ""}
                 </p>
                 {ed.date && (
                   <p className="text-[11px] shrink-0" style={{ color: DIM }}>
@@ -131,7 +131,7 @@ export default function CvPreview({ data }: { data: ResumeData }) {
           <SectionTitle>CERTIFICATIONS</SectionTitle>
           <div className="flex flex-col gap-0.5">
             {data.certifications.map((c, i) => (
-              <p key={i}>{[c.name, c.issuer, c.date].filter(Boolean).join("  —  ")}</p>
+              <p key={i}>{[c.name, c.issuer, c.date].filter(Boolean).join("  ·  ")}</p>
             ))}
           </div>
         </div>
