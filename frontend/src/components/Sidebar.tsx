@@ -113,6 +113,16 @@ export default function Sidebar() {
           Gérer mon offre
         </NavLink>
       </div>
+
+      <p className="text-[11px] text-center px-2" style={{ color: "var(--t-faint)" }}>
+        <NavLink to="/confidentialite" style={{ color: "var(--t-faint)" }}>
+          Confidentialité
+        </NavLink>
+        {" · "}
+        <NavLink to="/mentions-legales" style={{ color: "var(--t-faint)" }}>
+          Mentions légales
+        </NavLink>
+      </p>
     </aside>
   );
 }

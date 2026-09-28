@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import CatLogo from "./CatLogo.tsx";
 
 export default function AuthLayout({
@@ -31,6 +32,15 @@ export default function AuthLayout({
           </div>
           {children}
         </div>
+        <p className="text-xs text-center mt-5" style={{ color: "var(--t-faint)" }}>
+          <Link to="/confidentialite" style={{ color: "var(--t-faint)" }}>
+            Confidentialité
+          </Link>
+          {" · "}
+          <Link to="/mentions-legales" style={{ color: "var(--t-faint)" }}>
+            Mentions légales
+          </Link>
+        </p>
       </div>
     </div>
   );

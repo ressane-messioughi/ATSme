@@ -18,6 +18,9 @@ import AdminShell from "./components/AdminShell.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminResumes from "./pages/admin/AdminResumes.tsx";
+import Confidentialite from "./pages/Confidentialite.tsx";
+import MentionsLegales from "./pages/MentionsLegales.tsx";
+import CookieBanner from "./components/CookieBanner.tsx";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -28,11 +31,14 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Accueil 3D — public, toujours à "/" (design_handoff_atsme_3d/PROMPT_CLAUDE_CODE.md) */}
       <Route path="/" element={<Landing />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/inscription" element={<Register />} />
+      <Route path="/confidentialite" element={<Confidentialite />} />
+      <Route path="/mentions-legales" element={<MentionsLegales />} />
 
       {/* Route sans segment d'URL propre : enveloppe Protected+AppShell autour de chemins
           absolus qui gardent leur URL exacte (aucun préfixe "/dashboard" sur /cv etc.). */}
@@ -56,5 +62,7 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <CookieBanner />
+    </>
   );
 }
