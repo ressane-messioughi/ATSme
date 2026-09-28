@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./lib/auth.tsx";
 import AppShell from "./components/AppShell.tsx";
@@ -5,22 +6,27 @@ import Landing from "./pages/Landing.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
-import CvList from "./pages/CvList.tsx";
-import CvNew from "./pages/CvNew.tsx";
-import CvEditor from "./pages/CvEditor.tsx";
-import Templates from "./pages/Templates.tsx";
-import AtsAnalysis from "./pages/AtsAnalysis.tsx";
-import JobOffers from "./pages/JobOffers.tsx";
-import History from "./pages/History.tsx";
-import Settings from "./pages/Settings.tsx";
-import Abonnement from "./pages/Abonnement.tsx";
-import AdminShell from "./components/AdminShell.tsx";
-import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
-import AdminUsers from "./pages/admin/AdminUsers.tsx";
-import AdminResumes from "./pages/admin/AdminResumes.tsx";
-import Confidentialite from "./pages/Confidentialite.tsx";
-import MentionsLegales from "./pages/MentionsLegales.tsx";
 import CookieBanner from "./components/CookieBanner.tsx";
+
+// Chargées à la demande : rien de tout ça n'est nécessaire pour le premier rendu (accueil
+// public, connexion) ni juste après connexion (tableau de bord) — inutile de les faire
+// payer au chargement initial. React.lazy + Suspense découpe chacune en son propre morceau
+// de JS, récupéré seulement quand la route est visitée.
+const CvList = lazy(() => import("./pages/CvList.tsx"));
+const CvNew = lazy(() => import("./pages/CvNew.tsx"));
+const CvEditor = lazy(() => import("./pages/CvEditor.tsx"));
+const Templates = lazy(() => import("./pages/Templates.tsx"));
+const AtsAnalysis = lazy(() => import("./pages/AtsAnalysis.tsx"));
+const JobOffers = lazy(() => import("./pages/JobOffers.tsx"));
+const History = lazy(() => import("./pages/History.tsx"));
+const Settings = lazy(() => import("./pages/Settings.tsx"));
+const Abonnement = lazy(() => import("./pages/Abonnement.tsx"));
+const AdminShell = lazy(() => import("./components/AdminShell.tsx"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.tsx"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers.tsx"));
+const AdminResumes = lazy(() => import("./pages/admin/AdminResumes.tsx"));
+const Confidentialite = lazy(() => import("./pages/Confidentialite.tsx"));
+const MentionsLegales = lazy(() => import("./pages/MentionsLegales.tsx"));
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -32,6 +38,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
+    <Suspense fallback={null}>
     <Routes>
       {/* Accueil 3D — public, toujours à "/" (design_handoff_atsme_3d/PROMPT_CLAUDE_CODE.md) */}
       <Route path="/" element={<Landing />} />
@@ -62,6 +69,7 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
     <CookieBanner />
     </>
   );

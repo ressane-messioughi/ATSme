@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /cv
+Disallow: /templates
+Disallow: /analyse
+Disallow: /offres
+Disallow: /historique
+Disallow: /abonnement
+Disallow: /parametres
+Disallow: /admin
+
+Sitemap: https://atsme.ressane.fr/sitemap.xml

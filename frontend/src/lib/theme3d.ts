@@ -76,6 +76,8 @@ export function applyTheme3D(id: Theme3DId) {
   const style = document.documentElement.style;
   for (const [k, v] of Object.entries(tokens)) style.setProperty(`--t-${k}`, v);
   document.documentElement.style.colorScheme = id === "ghibli" ? "light" : "dark";
+  // Couleur de la barre d'adresse (mobile) assortie au thème actif.
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", tokens.accent);
 }
 
 // Appliqué avant le premier rendu React (voir main.tsx) pour éviter un flash du thème par

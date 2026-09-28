@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme3D, THEMES3D, type Theme3DId } from "../lib/theme3d.ts";
 
@@ -13,9 +13,17 @@ const ROUTES: Record<string, string> = {
   dashboard: "/dashboard",
 };
 
+// L'accueil positionne ses sections de texte en JS (top calculé dans placeSections(), pas
+// en CSS) une fois le DOM prêt puis une seconde fois après le chargement des polices — un
+// bref instant, tout s'empile en haut à gauche avant ce calcul. On ne peut pas corriger ça
+// dans accueil/index.html (copié tel quel, non modifiable) : on masque l'iframe le temps
+// qu'elle se stabilise, fond uni de la couleur du thème actif pendant l'attente.
+const REVEAL_DELAY_MS = 450;
+
 export default function Landing() {
   const navigate = useNavigate();
   const { setTheme } = useTheme3D();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
@@ -28,10 +36,22 @@ export default function Landing() {
   }, [navigate, setTheme]);
 
   return (
-    <iframe
-      src="/accueil/index.html?embed=1"
-      title="ATSme — accueil"
-      style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", border: 0, display: "block" }}
-    />
+    <div style={{ position: "fixed", inset: 0, background: "var(--t-bg)" }}>
+      <iframe
+        src="/accueil/index.html?embed=1"
+        title="ATSme — accueil"
+        onLoad={() => setTimeout(() => setReady(true), REVEAL_DELAY_MS)}
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          border: 0,
+          display: "block",
+          opacity: ready ? 1 : 0,
+          transition: "opacity .25s ease",
+        }}
+      />
+    </div>
   );
 }

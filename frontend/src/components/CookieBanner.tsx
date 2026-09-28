@@ -42,8 +42,10 @@ export default function CookieBanner() {
               Aucun cookie de suivi
             </p>
             <p className="text-sm mt-1.5 mb-0" style={{ color: "var(--t-ink2)" }}>
-              ATSme ne dépose ni cookie publicitaire ni traceur tiers. Nous gardons juste, sur votre appareil, de quoi
-              vous garder connecté·e et retenir vos préférences (thème, dernier modèle choisi).{" "}
+              ATSme ne dépose ni cookie publicitaire ni traceur tiers. Sur votre appareil, nous gardons seulement de
+              quoi vous garder connecté·e (essentiel) et retenir vos préférences — thème, dernier modèle choisi
+              (confort). La page charge aussi ses polices d'écriture depuis Google Fonts, une requête tierce classique
+              au chargement.{" "}
               <Link to="/confidentialite" className="font-semibold underline underline-offset-[3px]" style={{ color: "var(--t-accent)" }}>
                 En savoir plus
               </Link>
