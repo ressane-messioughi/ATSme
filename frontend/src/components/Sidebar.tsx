@@ -40,14 +40,11 @@ const GROUPS: { title: string | null; items: { to: string; label: string; end?: 
   },
 ];
 
-export default function Sidebar() {
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
   return (
-    <aside
-      className="hidden md:flex flex-col gap-[22px] w-[248px] shrink-0 px-3.5 py-4 sticky top-0 self-start max-h-screen overflow-auto"
-      style={{ background: "var(--t-surface)", borderRight: "1px solid var(--t-line-soft)", minHeight: "100vh" }}
-    >
-      <NavLink to="/dashboard" className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--t-r-md)]" style={{ color: "var(--t-ink)" }}>
+    <>
+      <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--t-r-md)]" style={{ color: "var(--t-ink)" }}>
         <CatLogo size={34} />
         <span className="font-bold text-[20px]" style={{ fontFamily: "var(--t-display)" }}>
           ATSme
@@ -78,6 +75,7 @@ export default function Sidebar() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                onClick={onNavigate}
                 className={({ isActive }) =>
                   `flex items-center gap-3 w-full min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] transition-colors ${isActive ? "font-semibold" : "font-medium"}`
                 }
@@ -107,6 +105,7 @@ export default function Sidebar() {
         </span>
         <NavLink
           to="/abonnement"
+          onClick={onNavigate}
           className="self-start text-[14px] font-semibold underline underline-offset-[3px]"
           style={{ color: "var(--t-accent)" }}
         >
@@ -115,14 +114,25 @@ export default function Sidebar() {
       </div>
 
       <p className="text-[11px] text-center px-2" style={{ color: "var(--t-faint)" }}>
-        <NavLink to="/confidentialite" style={{ color: "var(--t-faint)" }}>
+        <NavLink to="/confidentialite" onClick={onNavigate} style={{ color: "var(--t-faint)" }}>
           Confidentialité
         </NavLink>
         {" · "}
-        <NavLink to="/mentions-legales" style={{ color: "var(--t-faint)" }}>
+        <NavLink to="/mentions-legales" onClick={onNavigate} style={{ color: "var(--t-faint)" }}>
           Mentions légales
         </NavLink>
       </p>
+    </>
+  );
+}
+
+export default function Sidebar() {
+  return (
+    <aside
+      className="hidden md:flex flex-col gap-[22px] w-[248px] shrink-0 px-3.5 py-4 sticky top-0 self-start max-h-screen overflow-auto"
+      style={{ background: "var(--t-surface)", borderRight: "1px solid var(--t-line-soft)", minHeight: "100vh" }}
+    >
+      <SidebarContent />
     </aside>
   );
 }

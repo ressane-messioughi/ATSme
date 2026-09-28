@@ -26,7 +26,7 @@ import { createOffice } from './accueil/office-scene.js';
 import { ROOM3D, themeName } from './accueil/theme3d.js';
 const canvas = document.getElementById('c');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
@@ -44,10 +44,12 @@ addEventListener('message', e => { const d = e.data || {}; if (d.type === 'theme
 addEventListener('storage', e => { if (e.key === 'atsme-theme') applyTheme(e.newValue); });
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h < 1.2 ? 46 : 38; cam.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-let t = 0, last = performance.now();
+let t = 0, last = performance.now(), lastRender = 0;
+const FRAME_MS = 1000 / 24; // vignette décorative en arrière-plan : pas besoin de 60fps, réduit la charge CPU partagée avec le reste de l'app hôte
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (document.visibilityState === 'visible') {
+  if (document.visibilityState === 'visible' && now - lastRender >= FRAME_MS) {
+    lastRender = now;
     t += dt;
     // cycle : il prend sa tasse, boit une gorgée, la repose
     const c = reduce ? 1 : 0.5 - 0.5 * Math.cos(t * 0.55);

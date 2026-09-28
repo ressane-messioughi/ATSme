@@ -68,6 +68,13 @@ body,
   height: 100%;
 }
 
+html {
+  /* Les tiroirs mobiles (MobileDrawer) sont en position fixed + translateX(-100%) quand
+     fermés : hors écran visuellement, mais certains moteurs comptent quand même leur boîte
+     dans le scrollWidth du document, ce qui ouvrirait un scroll horizontal fantôme. */
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: var(--bg);

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar.tsx";
+import Sidebar, { SidebarContent } from "./Sidebar.tsx";
+import MobileDrawer from "./MobileDrawer.tsx";
 import { useAuth } from "../lib/auth.tsx";
 
 const CRUMBS: Record<string, [string, string]> = {
@@ -26,8 +27,13 @@ export default function AppShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [crumbGroup, crumbPage] = crumbFor(pathname);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -57,13 +63,30 @@ export default function AppShell() {
       </a>
 
       <Sidebar />
+      <MobileDrawer open={navOpen} onClose={() => setNavOpen(false)}>
+        <div className="flex flex-col gap-[22px] h-full px-3.5 py-4 overflow-auto">
+          <SidebarContent onNavigate={() => setNavOpen(false)} />
+        </div>
+      </MobileDrawer>
 
       <div className="flex-[999_1_560px] min-w-0 flex flex-col">
         <header
           className="sticky top-0 z-20 flex flex-wrap items-center gap-3.5 px-4 md:px-10 min-h-16"
           style={{ background: "var(--t-bg)", borderBottom: "1px solid var(--t-line-soft)" }}
         >
-          <nav aria-label="Fil d'Ariane" className="flex-1 min-w-[200px]">
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label="Ouvrir le menu"
+            className="md:hidden grid place-items-center w-10 h-10 rounded-[var(--t-r-md)] shrink-0 cursor-pointer"
+            style={{ border: "1px solid var(--t-line-soft)", background: "var(--t-surface)", color: "var(--t-ink)" }}
+          >
+            <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <nav aria-label="Fil d'Ariane" className="flex-1 min-w-[120px]">
             <ol className="list-none m-0 p-0 flex flex-wrap gap-2 text-sm" style={{ color: "var(--t-muted)" }}>
               <li>{crumbGroup}</li>
               {crumbPage && (

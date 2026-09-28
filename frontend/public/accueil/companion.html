@@ -32,7 +32,7 @@ import { THEMES3D, themeName, paintScene } from './accueil/theme3d.js';
 const kind = new URLSearchParams(location.search).get('o') || 'cat';
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
 const hemi = new THREE.HemisphereLight(0xdff0ff, 0xc9b58a, 1.8); scene.add(hemi);
@@ -112,8 +112,17 @@ applyTheme(themeName());
 addEventListener('message', e => { if ((e.data || {}).type === 'theme') applyTheme(e.data.theme); });
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-let t = 0, last = performance.now();
-function frame(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; if (!still) t += dt; tick(t, dt); renderer.render(scene, camera); requestAnimationFrame(frame); }
+let t = 0, last = performance.now(), lastRender = 0;
+const FRAME_MS = 1000 / 24; // mascotte décorative dans le bandeau cookies : pas besoin de 60fps
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (document.visibilityState === 'visible' && now - lastRender >= FRAME_MS) {
+    lastRender = now;
+    if (!still) t += dt;
+    tick(t, dt); renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frame);
+}
 requestAnimationFrame(frame);
 </script>
 </body>

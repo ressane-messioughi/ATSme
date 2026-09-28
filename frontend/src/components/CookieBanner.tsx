@@ -1,13 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { hasSeenCookieNotice, markCookieNoticeSeen } from "../lib/consent.ts";
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const [cardHeight, setCardHeight] = useState(140);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setVisible(!hasSeenCookieNotice());
   }, []);
+
+  // Le bandeau passe de 1 ligne (desktop) à un empilement de 3 blocs (mobile étroit) :
+  // sa hauteur réelle varie beaucoup selon la largeur, donc on la mesure au lieu de la
+  // figer, sinon le spacer réserve trop peu de place et le bandeau recouvre un bouton
+  // situé en bas d'une page courte (ex. connexion) sans que la page ne puisse défiler.
+  useEffect(() => {
+    if (!visible || !cardRef.current) return;
+    const el = cardRef.current;
+    const update = () => setCardHeight(el.offsetHeight + 16);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      removeEventListener("resize", update);
+    };
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -20,14 +40,16 @@ export default function CookieBanner() {
     <>
       {/* Élément réel dans le flux normal (pas du padding sur body/#root, coincés à
           height:100% par index.css) : réserve la place que le bandeau (position fixed)
-          occupe, sinon il recouvre la fin des pages assez longues pour défiler. */}
-      <div aria-hidden="true" style={{ height: 140, background: "var(--t-bg)" }} />
+          occupe, sinon il recouvre la fin des pages assez longues pour défiler. Hauteur
+          mesurée dynamiquement (cf. useEffect ci-dessus). */}
+      <div aria-hidden="true" style={{ height: cardHeight, background: "var(--t-bg)" }} />
       <div
         role="region"
         aria-label="Information sur les cookies"
         className="fixed left-0 right-0 bottom-0 z-[200] flex justify-center px-4 pb-4"
       >
         <div
+          ref={cardRef}
           className="w-full flex flex-wrap items-center gap-4 p-5 rounded-[var(--t-r-lg)]"
           style={{
             maxWidth: 720,
