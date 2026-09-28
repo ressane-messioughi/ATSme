@@ -14,7 +14,7 @@ import {
 } from "./icons.tsx";
 
 const GROUPS: { title: string | null; items: { to: string; label: string; end?: boolean; icon: typeof IconDashboard }[] }[] = [
-  { title: null, items: [{ to: "/", label: "Tableau de bord", end: true, icon: IconDashboard }] },
+  { title: null, items: [{ to: "/dashboard", label: "Tableau de bord", end: true, icon: IconDashboard }] },
   {
     title: "Créer",
     items: [
@@ -47,7 +47,7 @@ export default function Sidebar() {
       className="hidden md:flex flex-col gap-[22px] w-[248px] shrink-0 px-3.5 py-4 sticky top-0 self-start max-h-screen overflow-auto"
       style={{ background: "var(--t-surface)", borderRight: "1px solid var(--t-line-soft)", minHeight: "100vh" }}
     >
-      <NavLink to="/" className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--t-r-md)]" style={{ color: "var(--t-ink)" }}>
+      <NavLink to="/dashboard" className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--t-r-md)]" style={{ color: "var(--t-ink)" }}>
         <CatLogo size={34} />
         <span className="font-bold text-[20px]" style={{ fontFamily: "var(--t-display)" }}>
           ATSme

@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { type ResumeSummary, type ScoreBreakdown, getResume, listResumes, scoreLabel } from "../lib/resumeApi";
 import { useAuth } from "../lib/auth.tsx";
-import { useTheme3D } from "../lib/theme3d.ts";
-import OfficeVignette from "../components/OfficeVignette.tsx";
 import { IconPlusCircle } from "../components/icons.tsx";
 
 const ATS_TIPS = [
@@ -46,7 +44,6 @@ function buildTodos(resumes: ResumeSummary[] | null): Todo[] {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { theme } = useTheme3D();
   const [resumes, setResumes] = useState<ResumeSummary[] | null>(null);
   const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -291,7 +288,13 @@ export default function Dashboard() {
           className="w-full rounded-[var(--t-r-md)] overflow-hidden"
           style={{ maxWidth: 560, aspectRatio: "16/9", border: "1px solid var(--t-line-soft)", background: "var(--t-surface)" }}
         >
-          <OfficeVignette themeId={theme} />
+          <iframe
+            src="/accueil/vignette.html"
+            title=""
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ colorScheme: "light", display: "block", width: "100%", height: "100%", border: 0, pointerEvents: "none" }}
+          />
         </div>
         <h2
           id="tip-h"

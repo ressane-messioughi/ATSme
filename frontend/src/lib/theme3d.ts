@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 // Jetons des 4 thèmes de la nouvelle direction artistique (design_handoff_atsme_3d/,
-// copiés depuis Landing3d.dc.html / themes.json). Clé de stockage partagée avec la scène
-// 3D de l'accueil (src/three/theme3d.js lit/écrit la même clé localStorage) : changer de
-// thème ici ou sur /accueil reste cohérent d'une page à l'autre.
+// copiés depuis Landing3d.dc.html / themes.json). Clé de stockage partagée avec l'accueil
+// 3D (public/accueil/theme3d.js lit/écrit la même clé localStorage) : changer de thème
+// ici ou sur "/" reste cohérent d'une page à l'autre.
 export type Theme3DId = "ghibli" | "cyber" | "tech" | "vinyle";
 
 export const THEME3D_META: { id: Theme3DId; label: string; swatch: string }[] = [

@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar.tsx";
 import { useAuth } from "../lib/auth.tsx";
 
 const CRUMBS: Record<string, [string, string]> = {
-  "/": ["ATSme", "Tableau de bord"],
+  "/dashboard": ["ATSme", "Tableau de bord"],
   "/cv": ["Créer", "Mes CV"],
   "/cv/nouveau": ["Créer", "Nouveau CV"],
   "/templates": ["Créer", "Modèles"],
@@ -111,7 +111,7 @@ export default function AppShell() {
                 </div>
                 <Link
                   role="menuitem"
-                  to="/accueil"
+                  to="/"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center w-full min-h-11 px-3.5 rounded-[var(--t-r-md)] text-[15px] font-medium"
                   style={{ color: "var(--t-ink)" }}

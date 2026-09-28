@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATSme — Accueil</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Chakra+Petch:wght@500;700&family=Space+Grotesk:wght@500;700&family=Figtree:wght@400;600;700;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+    "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js",
+    "three/addons/exporters/OBJExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js",
+    "three/addons/exporters/GLTFExporter.js": "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT",
+    "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js": "sha384-4rziNxOBZKQ69i+w+f89KJ55TCYquwchVbByQwmaOeIOXdOU2PLDn3kOfXHwIJC9",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/OBJExporter.js": "sha384-nbwtoZENJD3Vq+ACK0CuGQdPMuDWHkamC2KJD70EV5nfg6jQjfppKOea07YJN+N3",
+    "https://unpkg.com/three@0.184.0/examples/jsm/exporters/GLTFExporter.js": "sha384-VofkvpG6HERhFCYbsUOHeNXBCqID2nfqkQqnVzE1jc/oPcz+qJ13ADdXH08hE+cQ"
+  }
+}
+</script>
+<style>
+:root{color-scheme:light;--cat:#e8913f;--cat-light:#fff1dc;--cat-stripe:#c46e28;--cat-eye:#2a1d16;--cat-pink:#f4a6a6;--collar:#4f7f52;--bell:#e8c14a;--shadow:#3b2f25;--on:#fff;--bg:#efe4c8;--paper:#fbf6ea;--ink:#3b2f25;--ink-dim:#5e4f40;--ink-faint:#7d6a55;--moss:#4f7f52;--moss-soft:#dfe9d6;--line:#dccdae;--ff-d:"Zen Maru Gothic",serif;--ff-b:"IBM Plex Sans",system-ui,sans-serif;--ff-m:"IBM Plex Mono",monospace}
+html{scroll-snap-type:y mandatory}.snap{position:absolute;left:0;width:1px;height:1px;scroll-snap-align:start;scroll-snap-stop:always;pointer-events:none}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ff-b);transition:background-color .35s,color .35s}
+#themes{position:fixed;top:14px;right:14px;z-index:12;display:flex;gap:4px;padding:3px;border-radius:999px;background:var(--paper);border:1px solid var(--line)}
+#themes button{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--ink);cursor:pointer;padding:0;position:relative}
+#themes button::after{content:'';position:absolute;inset:-9px}
+#themes .sw{display:none}#themes.open .sw{display:block}
+#themes #themeToggle{background:var(--paper);display:grid;place-items:center;color:var(--ink)}#themes.open #themeToggle{outline:none}
+#themes button[aria-pressed="true"]{outline:2px solid var(--moss);outline-offset:1px}
+#themes button:focus-visible{outline:3px solid var(--moss);outline-offset:3px}
+a{color:var(--moss)}a:hover{color:var(--ink)}
+#scene{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:pan-y}
+.veil{position:fixed;inset:0;pointer-events:none;transition:opacity .4s;background:linear-gradient(90deg,var(--bg) 0%,color-mix(in oklab,var(--bg) 75%,transparent) 30%,transparent 52%)}
+.track{position:relative;height:400vh;pointer-events:none}
+.sec{position:absolute;left:0;width:min(470px,92vw);padding:0 5vw;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;transition:opacity .25s}
+.lbl{font-family:var(--ff-m);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--moss);font-weight:600}
+h1,h2{font-family:var(--ff-d);font-weight:900;margin:0;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:clamp(40px,5.6vw,72px)}h2{font-size:clamp(30px,3.8vw,50px)}
+.sec p{margin:0;font-size:18px;line-height:1.55;color:var(--ink-dim);text-wrap:pretty;max-width:38ch}
+.try{font-family:var(--ff-m);font-size:12px;color:var(--ink-faint);display:flex;gap:8px;align-items:center}
+.try i{width:8px;height:8px;border-radius:50%;background:var(--moss);box-shadow:0 0 0 4px var(--moss-soft);display:block}
+/* repères cliquables sur la scène */
+#spots{position:fixed;inset:0;pointer-events:none}
+.spot{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:8px;padding:7px 12px 7px 9px;border-radius:999px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);font:600 13px/1 var(--ff-b);cursor:pointer;box-shadow:0 3px 0 var(--shadow);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s,box-shadow .12s,translate .12s;white-space:nowrap}
+.spot.on{opacity:1;visibility:visible}
+.spot::after,.btn::after{content:"";position:absolute;inset:-8px;pointer-events:none;clip-path:polygon(evenodd,0 0,100% 0,100% 100%,0 100%,0 0,8px 8px,8px calc(100% - 8px),calc(100% - 8px) calc(100% - 8px),calc(100% - 8px) 8px,8px 8px)}.spot:hover::after,.btn:hover::after{pointer-events:auto}.btn{position:relative}
+.spot:hover,.spot.hot{translate:0 -2px;box-shadow:0 5px 0 var(--shadow)}
+.spot:active{translate:0 2px;box-shadow:0 1px 0 var(--shadow)}
+.spot:focus-visible{outline:3px solid var(--moss);outline-offset:3px}
+.spot i{width:10px;height:10px;border-radius:50%;background:var(--moss);display:block;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in oklab,var(--moss) 45%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+/* navigation par chapitre */
+#chapters{position:fixed;right:22px;top:50%;translate:0 -50%;display:flex;flex-direction:column;gap:6px;z-index:5}
+.ch{display:flex;align-items:center;justify-content:flex-end;gap:10px;background:none;border:0;padding:6px 0;cursor:pointer;color:var(--ink-faint);font:600 13px var(--ff-b)}
+.ch span{opacity:0;translate:6px 0;transition:.2s;background:var(--paper);padding:4px 9px;border-radius:999px;border:1.5px solid var(--line)}
+.ch b{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink);background:var(--paper);transition:.2s;display:block}
+.ch:hover span,.ch.on span,.ch:focus-visible span{opacity:1;translate:0 0}
+.ch.on{color:var(--ink)}.ch.on b{background:var(--moss);border-color:var(--moss);scale:1.3}
+.ch:focus-visible{outline:none}.ch:focus-visible b{outline:3px solid var(--moss);outline-offset:3px}
+#labels{position:fixed;inset:0;pointer-events:none;z-index:6}
+.lbl3d{position:absolute;left:0;top:0;padding:6px 12px;border-radius:999px;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);font:700 14px var(--ff-b);white-space:nowrap;box-shadow:0 3px 0 var(--shadow);opacity:0;transition:opacity .3s;translate:-50% -50%}
+.lbl3d.on{opacity:1}
+#focusBack{position:fixed;left:50%;bottom:28px;translate:-50% 0;z-index:7;display:none}
+html.focus #focusBack{display:inline-flex}html.focus .veil{opacity:0}html.focus .sec,html.focus #hint{opacity:0!important;pointer-events:none}html.focus{overflow:hidden}
+.hint{position:fixed;left:50%;bottom:22px;translate:-50% 0;font-family:var(--ff-m);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);transition:opacity .4s;pointer-events:none}
+/* entrée dans l'app */
+#final{position:fixed;inset:0;background:var(--paper);display:grid;place-items:center;opacity:0;visibility:hidden;z-index:10}
+#final .card{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;padding:24px}
+#final .brand{display:flex;align-items:center;gap:10px;font:700 20px var(--ff-b)}
+#final .brand svg{color:var(--moss)}
+#brand{position:fixed;top:16px;left:20px;z-index:12;display:flex;align-items:center;gap:8px;font:900 22px var(--ff-d);color:var(--ink)}#brand svg{color:var(--moss)}
+#flash{position:fixed;inset:0;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:9}
+#final p{margin:0;color:var(--ink-dim);font-size:18px;max-width:36ch}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.btn{font:600 16px var(--ff-b);padding:14px 22px;border-radius:14px;border:1.5px solid var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--shadow);transition:translate .12s,box-shadow .12s}
+.btn:hover{translate:0 -2px;box-shadow:0 5px 0 var(--shadow)}.btn:active{translate:0 2px;box-shadow:0 1px 0 var(--shadow)}
+.btn.pri{background:var(--moss);color:var(--on)}.btn.sec{background:var(--paper);color:var(--ink)}
+.btn:focus-visible{outline:3px solid var(--moss);outline-offset:3px}
+.back{position:absolute;top:18px;left:50%;translate:-50% 0;background:none;border:0;color:var(--ink-faint);font:600 13px var(--ff-b);cursor:pointer}
+@media (max-width:760px){
+  .veil{background:linear-gradient(0deg,var(--bg) 0%,color-mix(in oklab,var(--bg) 70%,transparent) 30%,transparent 55%)}
+  .sec{width:100vw;padding:0 20px}
+  .sec>*{position:relative}
+  #chapters{top:auto;bottom:14px;right:50%;translate:50% 0;flex-direction:row;gap:14px}
+  .ch span{display:none}
+  .hint{bottom:48px}
+  .spot{font-size:12px;padding:6px 10px 6px 8px}
+}
+@media (prefers-reduced-motion:reduce){.spot i{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="Scène illustrée : un développeur en costume rédige son CV à son bureau, à côté de son chat et d'une imprimante 3D qui imprime des CV." role="img"></canvas>
+<div class="veil"></div>
+<div id="brand"><svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" style="flex:none;display:block"><path d="M5.2 15 L6.6 3.6 L14 9.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M26.8 15 L25.4 3.6 L18 9.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.6 11.6 L8.3 6.6 L11.9 9.6 Z" fill="var(--cat-pink)"></path><path d="M24.4 11.6 L23.7 6.6 L20.1 9.6 Z" fill="var(--cat-pink)"></path><path d="M3.8 18.4 A12.2 10.2 0 1 0 28.2 18.4 A12.2 10.2 0 1 0 3.8 18.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13.6 9.2 L14.2 12" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 8.6 L16 12.4" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M18.4 9.2 L17.8 12" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.6 22.6 A5.4 3.7 0 1 0 21.4 22.6 A5.4 3.7 0 1 0 10.6 22.6 Z" fill="var(--cat-light)"></path><path d="M9.2 17.4 A2.1 2.6 0 1 0 13.4 17.4 A2.1 2.6 0 1 0 9.2 17.4 Z" fill="var(--cat-eye)"></path><path d="M18.6 17.4 A2.1 2.6 0 1 0 22.8 17.4 A2.1 2.6 0 1 0 18.6 17.4 Z" fill="var(--cat-eye)"></path><path d="M11.3 16.4 A0.8 0.8 0 1 0 12.9 16.4 A0.8 0.8 0 1 0 11.3 16.4 Z" fill="#ffffff"></path><path d="M20.7 16.4 A0.8 0.8 0 1 0 22.3 16.4 A0.8 0.8 0 1 0 20.7 16.4 Z" fill="#ffffff"></path><path d="M14.8 20.9 L17.2 20.9 L16 22.2 Z" fill="var(--cat-pink)"></path><path d="M16 22.2 Q15.2 23.6 13.8 23" fill="none" stroke="var(--ink)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 22.2 Q16.8 23.6 18.2 23" fill="none" stroke="var(--ink)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.6 26.2 Q16 30.4 23.4 26.2" fill="none" stroke="var(--collar)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.4 29.3 A1.6 1.6 0 1 0 17.6 29.3 A1.6 1.6 0 1 0 14.4 29.3 Z" fill="var(--bell)" stroke="var(--ink)" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>ATSme</div>
+<div id="flash"></div>
+<div id="themes" role="group" aria-label="Thème"></div>
+<main class="track">
+<section class="sec" data-p="0.02"><div class="lbl">ATSme</div><h1>Votre CV passe les filtres.</h1><p>Écrivez-le une fois. ATSme l'optimise pour les logiciels de recrutement.</p></section>
+<section class="sec" data-p="0.27"><div class="lbl">1 · Écrire</div><h2>Rédigez, le score suit.</h2><p>Chaque ligne ajoutée met à jour votre score ATS en direct, sur l'écran de l'éditeur.</p></section>
+<section class="sec" data-p="0.5"><div class="lbl">2 · Analyser</div><h2>Comprenez ce qui bloque.</h2><p>Points forts, points faibles et conseils concrets, section par section.</p></section>
+<section class="sec" data-p="0.7"><div class="lbl">3 · Comparer</div><h2>Collez une offre, voyez l'écart.</h2><p>ATSme repère les mots-clés attendus et vous montre ceux qui manquent à votre CV.</p></section>
+<section class="sec" data-p="0.86"><div class="lbl">4 · Postuler</div><h2>Envoyez-le en confiance.</h2><p>Un CV lisible par les robots comme par les recruteurs, prêt à partir.</p></section>
+</main>
+<div id="labels" aria-hidden="true"></div>
+<button type="button" id="focusBack" class="btn sec">Retour à la visite</button>
+<div class="hint" id="hint">Faites défiler ou utilisez les flèches du clavier</div>
+<div id="final" aria-hidden="true">
+<button class="back" id="back">Revenir au bureau</button>
+<div class="card"><div class="brand"><svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true" style="flex:none;display:block"><path d="M5.2 15 L6.6 3.6 L14 9.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M26.8 15 L25.4 3.6 L18 9.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M7.6 11.6 L8.3 6.6 L11.9 9.6 Z" fill="var(--cat-pink)"></path><path d="M24.4 11.6 L23.7 6.6 L20.1 9.6 Z" fill="var(--cat-pink)"></path><path d="M3.8 18.4 A12.2 10.2 0 1 0 28.2 18.4 A12.2 10.2 0 1 0 3.8 18.4 Z" fill="var(--cat)" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path><path d="M13.6 9.2 L14.2 12" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 8.6 L16 12.4" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M18.4 9.2 L17.8 12" fill="none" stroke="var(--cat-stripe)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.6 22.6 A5.4 3.7 0 1 0 21.4 22.6 A5.4 3.7 0 1 0 10.6 22.6 Z" fill="var(--cat-light)"></path><path d="M9.2 17.4 A2.1 2.6 0 1 0 13.4 17.4 A2.1 2.6 0 1 0 9.2 17.4 Z" fill="var(--cat-eye)"></path><path d="M18.6 17.4 A2.1 2.6 0 1 0 22.8 17.4 A2.1 2.6 0 1 0 18.6 17.4 Z" fill="var(--cat-eye)"></path><path d="M11.3 16.4 A0.8 0.8 0 1 0 12.9 16.4 A0.8 0.8 0 1 0 11.3 16.4 Z" fill="#ffffff"></path><path d="M20.7 16.4 A0.8 0.8 0 1 0 22.3 16.4 A0.8 0.8 0 1 0 20.7 16.4 Z" fill="#ffffff"></path><path d="M14.8 20.9 L17.2 20.9 L16 22.2 Z" fill="var(--cat-pink)"></path><path d="M16 22.2 Q15.2 23.6 13.8 23" fill="none" stroke="var(--ink)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 22.2 Q16.8 23.6 18.2 23" fill="none" stroke="var(--ink)" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.6 26.2 Q16 30.4 23.4 26.2" fill="none" stroke="var(--collar)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.4 29.3 A1.6 1.6 0 1 0 17.6 29.3 A1.6 1.6 0 1 0 14.4 29.3 Z" fill="var(--bell)" stroke="var(--ink)" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>ATSme</div><h2>Votre espace est prêt.</h2><p>Créez votre premier CV ou reprenez un brouillon là où vous l'avez laissé.</p><div class="btns"><button class="btn pri" data-route="dashboard">Ouvrir mon espace</button><button class="btn sec" data-route="register">Créer un compte</button></div></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { createOffice, CHAPTERS } from './office-scene.js';
+import { ROOM3D, themeName } from './theme3d.js';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
+const scene = new THREE.Scene(); const BG = new THREE.Color('#efe4c8'); scene.background = BG; scene.fog = new THREE.Fog(BG, 5, 12);
+const camera = new THREE.PerspectiveCamera(34, 1, 0.03, 50);
+const office = createOffice(THREE); scene.add(office.group);
+
+
+// thème (suit celui choisi dans l'application)
+const PAGE = {"ghibli":{"bg":"#efe4c8","paper":"#fbf6ea","ink":"#3b2f25","ink-dim":"#5e4f40","ink-faint":"#7d6a55","moss":"#4f7f52","moss-soft":"#dfe9d6","line":"#dccdae","shadow":"#3b2f25","on":"#ffffff","ff-d":"\"Zen Maru Gothic\",serif","cat":"#e8913f","cat-light":"#fff1dc","cat-stripe":"#c46e28","cat-eye":"#2a1d16","cat-pink":"#f4a6a6","collar":"#4f7f52","bell":"#e8c14a"},"cyber":{"bg":"#0a0614","paper":"#140c24","ink":"#f3efff","ink-dim":"#cfc6ee","ink-faint":"#a89fd0","moss":"#fcee0a","moss-soft":"#2a2610","line":"#ff2a6d","shadow":"#ff2a6d","on":"#0a0614","ff-d":"\"Chakra Petch\",sans-serif","cat":"#5a4590","cat-light":"#b8a8e8","cat-stripe":"#2a1d4a","cat-eye":"#05d9e8","cat-pink":"#ff2a6d","collar":"#fcee0a","bell":"#fcee0a"},"tech":{"bg":"#0d1117","paper":"#161b22","ink":"#e6edf3","ink-dim":"#b8c1cc","ink-faint":"#8b949e","moss":"#4c8dff","moss-soft":"#16263f","line":"#30363d","shadow":"transparent","on":"#0d1117","ff-d":"\"Space Grotesk\",sans-serif","cat":"#8b949e","cat-light":"#e6edf3","cat-stripe":"#57606a","cat-eye":"#0d1117","cat-pink":"#f4a6a6","collar":"#4c8dff","bell":"#d29922"},"vinyle":{"bg":"#121212","paper":"#181818","ink":"#ffffff","ink-dim":"#d6d6d6","ink-faint":"#a7a7a7","moss":"#1ed760","moss-soft":"#16331f","line":"#2a2a2a","shadow":"transparent","on":"#000000","ff-d":"\"Figtree\",sans-serif","cat":"#3a3a3a","cat-light":"#d0d0d0","cat-stripe":"#1a1a1a","cat-eye":"#1ed760","cat-pink":"#f3727f","collar":"#1ed760","bell":"#e8c14a"}};
+const SW = {"ghibli":["Ghibli","linear-gradient(135deg,#4f7f52 50%,#f3ead8 50%)"],"cyber":["Cyberpunk","linear-gradient(135deg,#ff2a6d 50%,#fcee0a 50%)"],"tech":["Tech dark","linear-gradient(135deg,#4c8dff 50%,#0d1117 50%)"],"vinyle":["Vinyle","linear-gradient(135deg,#1ed760 50%,#121212 50%)"]};
+const embedded = new URLSearchParams(location.search).has('embed');
+const themesEl = document.getElementById('themes');
+const themeToggle = document.createElement('button'); themeToggle.type = 'button'; themeToggle.id = 'themeToggle'; themeToggle.setAttribute('aria-label', 'Changer de thème'); themeToggle.setAttribute('aria-expanded', 'false'); themeToggle.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>';
+themeToggle.onclick = () => { const o2 = !themesEl.classList.contains('open'); themesEl.classList.toggle('open', o2); themeToggle.setAttribute('aria-expanded', String(o2)); };
+themesEl.appendChild(themeToggle);
+addEventListener('pointerdown', e => { if (!themesEl.contains(e.target)) { themesEl.classList.remove('open'); themeToggle.setAttribute('aria-expanded', 'false'); } });
+const themeBtns = Object.entries(SW).map(([k, [label, bg]]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'sw'; b.title = label; b.setAttribute('aria-label', 'Thème ' + label); b.style.background = bg; b.onclick = () => pickTheme(k); themesEl.appendChild(b); return [k, b]; });
+let curTheme = null;
+function applyTheme(n) {
+  if (!PAGE[n]) n = 'ghibli'; if (n === curTheme) return; curTheme = n;
+  const st = document.documentElement.style; Object.entries(PAGE[n]).forEach(([k, v]) => st.setProperty('--' + k, v));
+  const R = ROOM3D[n]; BG.set(R.bg); scene.fog.color.set(R.bg); office.theme(R);
+  themeBtns.forEach(([k, b]) => b.setAttribute('aria-pressed', k === n ? 'true' : 'false'));
+}
+function pickTheme(n) { if (embedded) parent.postMessage({ type: 'atsme-theme', theme: n }, '*'); else { try { localStorage.setItem('atsme-theme', n); } catch (e) {} } applyTheme(n); }
+applyTheme(themeName());
+addEventListener('message', e => { if ((e.data || {}).type === 'theme') applyTheme(e.data.theme); });
+addEventListener('storage', e => { if (e.key === 'atsme-theme') applyTheme(e.newValue); });
+
+// défilement
+const maxScroll = () => document.documentElement.scrollHeight - innerHeight;
+let jumpNow = false, jumping = false;
+const flashEl = document.getElementById('flash');
+function scrollToP(p) {
+  const top = maxScroll() * p;
+  const jump = () => { scrollTo({ top, behavior: 'auto' }); jumpNow = true; lastY = top; };
+  if (reduce) { jump(); return; }
+  if (jumping) return; jumping = true; flashEl.style.opacity = 1;
+  setTimeout(() => { jump(); requestAnimationFrame(() => requestAnimationFrame(() => { flashEl.style.opacity = 0; jumping = false; })); }, 190);
+}
+function go(route) {
+  if (new URLSearchParams(location.search).has('embed')) { parent.postMessage({ type: 'atsme-navigate', route }, '*'); return; }
+  // À ADAPTER : routes de l'application réelle
+  const ROUTES = { login: '/connexion', register: '/inscription', dashboard: '/dashboard' };
+  location.href = ROUTES[route] || '/login';
+}
+
+// actions (clic sur un objet 3D ou sur un repère)
+const ACTIONS = {
+  ouvrir: () => scrollToP(1), comparer: () => scrollToP(0.7), cafe: () => scrollToP(0.5),
+  chat: () => office.react('chat'), lampe: () => office.react('lampe'), plante: () => office.react('plante'), printer: () => office.react('printer')
+};
+
+// défilement : points d'arrêt natifs du navigateur (scroll-snap) sur chaque étape
+const SNAPS = CHAPTERS.map(c => c.p);
+const trackEl = document.querySelector('.track');
+const snapEls = SNAPS.map(() => { const d = document.createElement('div'); d.className = 'snap'; d.setAttribute('aria-hidden', 'true'); trackEl.appendChild(d); return d; });
+function placeSnaps() { const m = maxScroll(); snapEls.forEach((d, i) => { d.style.top = Math.round(SNAPS[i] * m) + 'px'; }); }
+const goStep = p => scrollTo({ top: Math.round(p * maxScroll()), behavior: reduce ? 'auto' : 'smooth' });
+const stepTo = dir => { const m = maxScroll(), p = scrollY / Math.max(1, m); goStep(dir > 0 ? SNAPS.find(s => s > p + 0.01) ?? 1 : [...SNAPS].reverse().find(s => s < p - 0.01) ?? 0); };
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select,button')) return;
+  if (['ArrowDown', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); stepTo(1); }
+  if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); stepTo(-1); }
+  if (e.key === 'Home') { e.preventDefault(); goStep(0); }
+  if (e.key === 'End') { e.preventDefault(); goStep(1); }
+});
+
+// sections positionnées sur leur moment du scroll
+const secs = [...document.querySelectorAll('.sec')].map(el => ({ el, p: +el.dataset.p }));
+function placeSections() { const m = maxScroll(), mobile = innerWidth < 760; secs.forEach(s => { const h = s.el.offsetHeight; s.el.style.top = (s.p * m + (mobile ? innerHeight * 0.92 - h : innerHeight * 0.5 - h / 2)) + 'px'; }); }
+
+// écran final
+const finalEl = document.getElementById('final');
+finalEl.querySelectorAll('[data-route]').forEach(b => b.onclick = () => go(b.dataset.route));
+document.getElementById('back').onclick = () => scrollToP(0.86);
+
+// étagère : zoom caméra + étiquettes
+const SHELF = new Set(['youtube', 'instagram', 'trust', 'trophee', 'cadenas', 'drapeau', 'etagere']);
+const LABELS = [['youtubeFrame', 'YouTube', 0.16], ['instagramFrame', 'Instagram', 0.16], ['trustFrame', 'Trustpilot', 0.16], ['trophy', 'Meilleur projet', -0.07], ['padlock', 'Sécurité', -0.07], ['frenchFlag', 'Français', -0.07]].map(([name, text, dy]) => { const el = document.createElement('div'); el.className = 'lbl3d'; el.textContent = text; document.getElementById('labels').appendChild(el); return { obj: office.group.getObjectByName(name), el, dy }; });
+const FOC_P = new THREE.Vector3(-0.42, 1.52, 1.94), FOC_T = new THREE.Vector3(-2.085, 1.52, 1.94), _ft = new THREE.Vector3(), _lp = new THREE.Vector3();
+let focusOn = false, focusK = 0;
+function setFocus(on) { focusOn = on; document.documentElement.classList.toggle('focus', on); if (on) document.getElementById('focusBack').focus({ preventScroll: true }); }
+document.getElementById('focusBack').addEventListener('click', () => setFocus(false));
+addEventListener('keydown', e => { if (e.key === 'Escape' && focusOn) setFocus(false); });
+
+// sélection 3D
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let hovered = null;
+function pick(e) {
+  const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  let best = null, bd = Infinity;
+  office.pickables.forEach(pk => { const h = ray.intersectObject(pk.object, true)[0]; if (h && h.distance < bd) { bd = h.distance; best = pk.action; } });
+  return best;
+}
+let tmx = 0, tmy = 0;
+addEventListener('pointermove', e => {
+  tmx = e.clientX / innerWidth - 0.5; tmy = e.clientY / innerHeight - 0.5;
+  if (e.target !== canvas) return;
+  hovered = pick(e); canvas.style.cursor = hovered ? 'pointer' : '';
+});
+canvas.addEventListener('click', e => { const a = pick(e);
+  if (focusOn) { if (a && SHELF.has(a)) office.react(a); else setFocus(false); return; }
+  if (a && SHELF.has(a)) { setFocus(true); office.react(a); return; }
+  if (a) (ACTIONS[a] || (() => office.react(a)))(); });
+
+// taille
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.fov = w < 760 ? 52 : 34; camera.updateProjectionMatrix(); placeSections(); placeSnaps();
+}
+addEventListener('resize', resize); resize();
+document.fonts?.ready.then(placeSections);
+
+// boucle
+const hint = document.getElementById('hint');
+const proj = new THREE.Vector3();
+let pV = 0, lastY = scrollY, vel = 0, pS = clamp(scrollY / Math.max(1, maxScroll())), mx = 0, my = 0, t = 0, last = performance.now(), activeCh = -1;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+  const target = window.__forceP ?? clamp(scrollY / Math.max(1, maxScroll()));
+  if (reduce || jumpNow) { pS = target; pV = 0; jumpNow = false; } else { pV += ((target - pS) * 70 - pV * 16.7) * dt; pS += pV * dt; }
+  const dy = Math.abs(scrollY - lastY); lastY = scrollY;
+  vel += (clamp(dy / 14) - vel) * Math.min(1, dt * 6);
+  mx += (tmx - mx) * Math.min(1, dt * 3); my += (tmy - my) * Math.min(1, dt * 3);
+
+  const w = innerWidth, h = innerHeight, pose = office.camera(pS);
+  focusK += ((focusOn ? 1 : 0) - focusK) * (reduce ? 1 : Math.min(1, dt * 3.2)); const fe = focusK * focusK * (3 - 2 * focusK);
+  const par = pose.offset * (reduce ? 0 : 1) * (1 - fe);
+  camera.position.copy(pose.position).lerp(FOC_P, fe).add(new THREE.Vector3(mx * 0.1 * par, -my * 0.05 * par, 0));
+  camera.lookAt(_ft.copy(pose.target).lerp(FOC_T, fe));
+  const shift = w >= 760 ? 0.13 * pose.offset * (1 - fe) : 0;
+  if (shift > 0.001) camera.setViewOffset(w, h, -w * shift, 0, w, h); else camera.clearViewOffset();
+
+  office.update({ p: pS, vel, t, dt, camPos: camera.position });
+  renderer.render(scene, camera);
+  if (fe > 0.02) LABELS.forEach(L2 => { if (!L2.obj) return; L2.obj.getWorldPosition(_lp); _lp.y += L2.dy; _lp.project(camera); L2.el.style.left = ((_lp.x * 0.5 + 0.5) * w) + 'px'; L2.el.style.top = ((-_lp.y * 0.5 + 0.5) * h) + 'px'; L2.el.classList.toggle('on', fe > 0.85); }); else LABELS.forEach(L2 => L2.el.classList.remove('on'));
+
+  // sections
+  secs.forEach(s => { s.el.style.opacity = clamp(1.3 - Math.abs(pS - s.p) / 0.08); });
+  hint.style.opacity = target > 0.02 ? 0 : 1;
+  // entrée dans l'app
+  const f = smooth(0.955, 0.99, pS);
+  finalEl.style.opacity = f; finalEl.style.visibility = f > 0.01 ? 'visible' : 'hidden'; finalEl.setAttribute('aria-hidden', f > 0.5 ? 'false' : 'true');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

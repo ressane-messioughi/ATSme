@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ATSme — vignette bureau</title>
+<script type="importmap">
+{
+  "imports": {
+    "three/addons/loaders/GLTFLoader.js": "https://unpkg.com/three@0.184.0/examples/jsm/loaders/GLTFLoader.js",
+    "three/addons/utils/BufferGeometryUtils.js": "https://unpkg.com/three@0.184.0/examples/jsm/utils/BufferGeometryUtils.js",
+    "@pixiv/three-vrm": "https://unpkg.com/@pixiv/three-vrm@3/lib/three-vrm.module.js","three": "https://unpkg.com/three@0.184.0/build/three.module.js" },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"
+  }
+}
+</script>
+<style>html{color-scheme:light}html,body{margin:0;height:100%;overflow:hidden;background:transparent}canvas{display:block;width:100%;height:100%}</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { createOffice } from './accueil/office-scene.js';
+import { ROOM3D, themeName } from './accueil/theme3d.js';
+const canvas = document.getElementById('c');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
+const scene = new THREE.Scene(); const BG = new THREE.Color('#efe4c8'); scene.background = BG; scene.fog = new THREE.Fog(BG, 3, 8);
+const office = createOffice(THREE); scene.add(office.group);
+
+const dustObj = office.group.getObjectByName('dust'); if (dustObj) dustObj.visible = false;
+const walkerObj = office.group.getObjectByName('catWalker'); if (walkerObj) walkerObj.visible = false;
+const params = new URLSearchParams(location.search);
+const cam = new THREE.PerspectiveCamera(28, 1, 0.03, 30);
+const POS = new THREE.Vector3(-1.38, 1.5, -0.62), TGT = new THREE.Vector3(-0.36, 0.92, 0.3);
+function applyTheme(n) { const R = ROOM3D[n] || ROOM3D.ghibli; BG.set(R.bg); scene.fog.color.set(R.bg); office.theme(R); }
+applyTheme(themeName());
+addEventListener('message', e => { const d = e.data || {}; if (d.type === 'theme') applyTheme(d.theme); });
+addEventListener('storage', e => { if (e.key === 'atsme-theme') applyTheme(e.newValue); });
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.fov = w / h < 1.2 ? 46 : 38; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+let t = 0, last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (document.visibilityState === 'visible') {
+    t += dt;
+    // cycle : il prend sa tasse, boit une gorgée, la repose
+    const c = reduce ? 1 : 0.5 - 0.5 * Math.cos(t * 0.55);
+    const p = 0.445 + 0.06 * c;
+    cam.position.copy(POS).add(new THREE.Vector3(0, Math.sin(t * 0.3) * 0.008, Math.sin(t * 0.2) * 0.02)); cam.lookAt(TGT);
+    office.update({ p, vel: 0, t, dt, camPos: cam.position, greet: 0.45 + 0.25 * (1 - c) });
+    renderer.render(scene, cam);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

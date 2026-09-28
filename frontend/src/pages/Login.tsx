@@ -23,7 +23,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

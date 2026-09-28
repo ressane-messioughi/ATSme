@@ -68,7 +68,7 @@ export default function AdminShell() {
 
   if (loading) return null;
   if (!user) return <Navigate to="/connexion" replace />;
-  if (!user.is_admin) return <Navigate to="/" replace />;
+  if (!user.is_admin) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="min-h-screen flex flex-wrap" style={{ background: "var(--t-bg)", color: "var(--t-ink)" }}>
@@ -128,7 +128,7 @@ export default function AdminShell() {
 
         <div className="mt-auto flex flex-col gap-0.5">
           <Link
-            to="/"
+            to="/dashboard"
             className="flex items-center gap-3 w-full min-h-11 px-3 rounded-[var(--t-r-md)] text-[15px] font-medium"
             style={{ color: "var(--t-ink2)" }}
           >
@@ -194,7 +194,7 @@ export default function AdminShell() {
                 </div>
                 <Link
                   role="menuitem"
-                  to="/"
+                  to="/dashboard"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center w-full min-h-11 px-3.5 rounded-[var(--t-r-md)] text-[15px] font-medium"
                   style={{ color: "var(--t-ink)" }}

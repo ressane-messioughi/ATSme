@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./lib/auth.tsx";
 import AppShell from "./components/AppShell.tsx";
 import Landing from "./pages/Landing.tsx";
@@ -21,37 +21,34 @@ import AdminResumes from "./pages/admin/AdminResumes.tsx";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  const location = useLocation();
   if (loading) return null;
-  if (!user) return <Navigate to={location.pathname === "/" ? "/accueil" : "/connexion"} replace />;
+  if (!user) return <Navigate to="/connexion" replace />;
   return <>{children}</>;
 }
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/accueil" element={<Landing />} />
+      {/* Accueil 3D — public, toujours à "/" (design_handoff_atsme_3d/PROMPT_CLAUDE_CODE.md) */}
+      <Route path="/" element={<Landing />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/inscription" element={<Register />} />
-      <Route
-        path="/"
-        element={
-          <Protected>
-            <AppShell />
-          </Protected>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="cv" element={<CvList />} />
-        <Route path="cv/nouveau" element={<CvNew />} />
-        <Route path="cv/:id" element={<CvEditor />} />
-        <Route path="templates" element={<Templates />} />
-        <Route path="analyse" element={<AtsAnalysis />} />
-        <Route path="offres" element={<JobOffers />} />
-        <Route path="historique" element={<History />} />
-        <Route path="abonnement" element={<Abonnement />} />
-        <Route path="parametres" element={<Settings />} />
+
+      {/* Route sans segment d'URL propre : enveloppe Protected+AppShell autour de chemins
+          absolus qui gardent leur URL exacte (aucun préfixe "/dashboard" sur /cv etc.). */}
+      <Route element={<Protected><AppShell /></Protected>}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/cv" element={<CvList />} />
+        <Route path="/cv/nouveau" element={<CvNew />} />
+        <Route path="/cv/:id" element={<CvEditor />} />
+        <Route path="/templates" element={<Templates />} />
+        <Route path="/analyse" element={<AtsAnalysis />} />
+        <Route path="/offres" element={<JobOffers />} />
+        <Route path="/historique" element={<History />} />
+        <Route path="/abonnement" element={<Abonnement />} />
+        <Route path="/parametres" element={<Settings />} />
       </Route>
+
       <Route path="/admin" element={<AdminShell />}>
         <Route index element={<AdminDashboard />} />
         <Route path="utilisateurs" element={<AdminUsers />} />
