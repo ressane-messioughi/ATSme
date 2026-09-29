@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { type ResumeSummary, jobMatch, listResumes } from "../lib/resumeApi";
+import { type JobMatchResult, type ResumeSummary, jobMatch, listResumes } from "../lib/resumeApi";
 import { IconCheck, IconWarn } from "../components/icons.tsx";
 
 export default function JobOffers() {
@@ -8,7 +8,7 @@ export default function JobOffers() {
   const [jobText, setJobText] = useState("");
   const [matching, setMatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ score: number; matched: string[]; missing: string[] } | null>(null);
+  const [result, setResult] = useState<JobMatchResult | null>(null);
 
   useEffect(() => {
     listResumes()
@@ -127,9 +127,24 @@ export default function JobOffers() {
           className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-4"
           style={{ background: "var(--t-surface)", border: "1px solid var(--t-line-soft)" }}
         >
-          <h2 id="of-res" className="font-black text-xl m-0" style={{ fontFamily: "var(--t-display)" }}>
-            Résultat
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="of-res" className="font-black text-xl m-0" style={{ fontFamily: "var(--t-display)" }}>
+              Résultat
+            </h2>
+            {result && (
+              <span
+                className="text-[11px] font-semibold uppercase px-2 py-1 rounded-[var(--t-r-pill)]"
+                style={{
+                  fontFamily: "var(--t-mono)",
+                  letterSpacing: "0.08em",
+                  background: result.source === "ai" ? "var(--t-accent-soft)" : "var(--t-field)",
+                  color: result.source === "ai" ? "var(--t-accent-ink)" : "var(--t-muted)",
+                }}
+              >
+                {result.source === "ai" ? "Analysé par IA" : "Analyse par mots-clés"}
+              </span>
+            )}
+          </div>
           {!result && (
             <p className="text-sm" style={{ color: "var(--t-muted)" }}>
               Collez une offre et lancez l'analyse pour voir le résultat ici.
@@ -201,6 +216,22 @@ export default function JobOffers() {
                 <p className="m-0 text-[15px]" style={{ color: "var(--t-ink2)" }}>
                   Aucun mot-clé manquant.
                 </p>
+              )}
+              {result.suggestions && result.suggestions.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-[15px] m-0 mb-2">Conseils pour cette offre</h3>
+                  <ul className="list-none m-0 p-0 flex flex-col gap-2">
+                    {result.suggestions.map((s, i) => (
+                      <li
+                        key={i}
+                        className="text-sm rounded-[var(--t-r-md)] px-3.5 py-2.5"
+                        style={{ background: "var(--t-field)", color: "var(--t-ink2)" }}
+                      >
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </>
           )}

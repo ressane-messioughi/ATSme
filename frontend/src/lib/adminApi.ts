@@ -55,6 +55,38 @@ export function listAdminResumes() {
   return api<AdminResume[]>("/admin/resumes");
 }
 
+export type PromoCode = {
+  id: number;
+  code: string;
+  kind: "plan" | "resumes";
+  plan_value: string | null;
+  resumes_value: number | null;
+  max_redemptions: number | null;
+  redemptions_count: number;
+  active: number;
+  expires_at: string | null;
+  created_at: string;
+};
+export function listPromoCodes() {
+  return api<PromoCode[]>("/admin/promo-codes");
+}
+export function createPromoCode(input: {
+  code: string;
+  kind: "plan" | "resumes";
+  planValue?: Plan;
+  resumesValue?: number;
+  maxRedemptions?: number | null;
+  expiresAt?: string | null;
+}) {
+  return api<PromoCode>("/admin/promo-codes", { method: "POST", body: JSON.stringify(input) });
+}
+export function setPromoCodeActive(id: number, active: boolean) {
+  return api<PromoCode>(`/admin/promo-codes/${id}`, { method: "PATCH", body: JSON.stringify({ active }) });
+}
+export function deletePromoCode(id: number) {
+  return api<{ ok: boolean }>(`/admin/promo-codes/${id}`, { method: "DELETE" });
+}
+
 export function isOnline(lastSeenAt: string | null): boolean {
   if (!lastSeenAt) return false;
   return Date.now() - new Date(lastSeenAt).getTime() < 5 * 60 * 1000;

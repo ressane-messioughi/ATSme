@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
 import CatLogo from "./CatLogo.tsx";
 import MobileDrawer from "./MobileDrawer.tsx";
+import { Avatar } from "../lib/avatars.tsx";
 
 function IconUsers({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -33,10 +34,19 @@ function IconFileStack({ className = "w-5 h-5" }: { className?: string }) {
     </svg>
   );
 }
+function IconTag({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className} style={{ flex: "none" }}>
+      <path d="M3.5 12.5 12 4h7.5v7.5L11 20 3.5 12.5Z" />
+      <circle cx="15.5" cy="8.5" r="1.3" />
+    </svg>
+  );
+}
 
 const ITEMS = [
   { to: "/admin", label: "Vue d'ensemble", end: true, icon: IconGrid },
   { to: "/admin/utilisateurs", label: "Utilisateurs", icon: IconUsers },
+  { to: "/admin/codes-promo", label: "Codes promo", icon: IconTag },
   { to: "/admin/cv", label: "CV déposés", icon: IconFileStack },
 ];
 
@@ -44,6 +54,7 @@ const CRUMBS: Record<string, string> = {
   "/admin": "Vue d'ensemble",
   "/admin/utilisateurs": "Utilisateurs",
   "/admin/cv": "CV déposés",
+  "/admin/codes-promo": "Codes promo",
 };
 
 function AdminNavContent({ onNavigate, onLogout }: { onNavigate?: () => void; onLogout: () => void }) {
@@ -203,13 +214,7 @@ export default function AdminShell() {
               className="flex items-center gap-2 min-h-11 pr-2.5 pl-1 rounded-[var(--t-r-pill)] cursor-pointer"
               style={{ border: "1px solid var(--t-line-soft)", background: "var(--t-surface)", color: "var(--t-ink)" }}
             >
-              <span
-                aria-hidden="true"
-                className="w-[34px] h-[34px] rounded-full grid place-items-center font-bold text-sm"
-                style={{ background: "var(--t-pop)", color: "var(--t-on-accent)" }}
-              >
-                {user.name?.slice(0, 1).toUpperCase()}
-              </span>
+              <Avatar avatar={user.avatar} name={user.name} size={34} />
               <span className="font-semibold text-sm">{user.name}</span>
               <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
                 <path d="M6 9l6 6 6-6" />

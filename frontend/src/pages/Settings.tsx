@@ -3,6 +3,7 @@ import { useAuth } from "../lib/auth.tsx";
 import { api, ApiError } from "../lib/api.ts";
 import { listResumes } from "../lib/resumeApi";
 import { THEME3D_META, useTheme3D, type Theme3DId } from "../lib/theme3d.ts";
+import { AVATARS, Avatar, type AvatarId } from "../lib/avatars.tsx";
 
 const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", premium: "Premium", entreprise: "Entreprise" };
 const PLAN_LIMITS: Record<string, number> = { free: 5, pro: 30, premium: 100, entreprise: Infinity };
@@ -29,6 +30,7 @@ export default function Settings() {
   const [pwState, setPwState] = useState<"idle" | "saving" | "saved">("idle");
 
   const [resumeCount, setResumeCount] = useState<number | null>(null);
+  const [avatarState, setAvatarState] = useState<"idle" | "saving">("idle");
 
   useEffect(() => {
     setName(user?.name || "");
@@ -53,6 +55,16 @@ export default function Settings() {
     }
   }
 
+  async function onPickAvatar(avatar: AvatarId) {
+    setAvatarState("saving");
+    try {
+      await api("/me", { method: "PUT", body: JSON.stringify({ avatar }) });
+      await refreshUser();
+    } finally {
+      setAvatarState("idle");
+    }
+  }
+
   async function onChangePassword(e: FormEvent) {
     e.preventDefault();
     setPwError(null);
@@ -70,7 +82,8 @@ export default function Settings() {
   }
 
   const plan = user?.plan || "free";
-  const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const baseLimit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const limit = baseLimit === Infinity ? baseLimit : baseLimit + (user?.bonus_resumes || 0);
   const pct = resumeCount != null && limit !== Infinity ? Math.min(100, (resumeCount / limit) * 100) : 0;
 
   return (
@@ -113,6 +126,42 @@ export default function Settings() {
               </button>
             );
           })}
+        </div>
+      </section>
+
+      <section aria-labelledby="avatar-h" className="p-[22px] flex flex-col gap-3.5" style={sectionStyle}>
+        <h2 id="avatar-h" className="font-black text-[22px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Avatar
+        </h2>
+        <div role="radiogroup" aria-label="Icône de profil" className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!user?.avatar}
+            aria-label="Aucun avatar (initiale)"
+            onClick={() => onPickAvatar(null as unknown as AvatarId)}
+            disabled={avatarState === "saving"}
+            className="w-14 h-14 rounded-full grid place-items-center cursor-pointer disabled:opacity-60"
+            style={{ outline: !user?.avatar ? "2.5px solid var(--t-accent)" : "2.5px solid transparent", outlineOffset: 2 }}
+          >
+            <Avatar avatar={null} name={user?.name} size={56} />
+          </button>
+          {AVATARS.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              role="radio"
+              aria-checked={user?.avatar === a.id}
+              aria-label={a.label}
+              title={a.label}
+              onClick={() => onPickAvatar(a.id)}
+              disabled={avatarState === "saving"}
+              className="w-14 h-14 rounded-full grid place-items-center cursor-pointer disabled:opacity-60"
+              style={{ outline: user?.avatar === a.id ? "2.5px solid var(--t-accent)" : "2.5px solid transparent", outlineOffset: 2 }}
+            >
+              <Avatar avatar={a.id} size={56} />
+            </button>
+          ))}
         </div>
       </section>
 
@@ -161,6 +210,11 @@ export default function Settings() {
         <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--t-track)" }}>
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--t-accent)" }} />
         </div>
+        {Boolean(user?.bonus_resumes) && (
+          <p className="m-0 text-xs" style={{ color: "var(--t-accent)" }}>
+            dont {user?.bonus_resumes} CV bonus (code promo)
+          </p>
+        )}
         <a
           href="/abonnement"
           className="self-start mt-1 inline-flex items-center min-h-11 px-4 rounded-[var(--t-r-md)] font-semibold text-sm"

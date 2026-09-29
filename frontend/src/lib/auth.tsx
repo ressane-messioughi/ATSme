@@ -1,13 +1,23 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, clearToken, getToken, setToken } from "./api";
 
-type User = { id: number; email: string; name: string; plan: string; is_admin?: number | boolean };
+export type User = {
+  id: number;
+  email: string;
+  name: string;
+  plan: string;
+  is_admin?: number | boolean;
+  avatar?: string | null;
+  email_verified_at?: string | null;
+  bonus_resumes?: number;
+};
 
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<{ needsVerification: true; email: string }>;
+  completeVerification: (token: string, user: User) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
 };
@@ -39,12 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function register(email: string, password: string, name: string) {
-    const res = await api<{ token: string; user: User }>("/auth/register", {
+    // Pas de connexion automatique : le compte doit être confirmé par email avant tout accès.
+    const res = await api<{ needsVerification: true; email: string }>("/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password, name }),
     });
-    setToken(res.token);
-    setUser(res.user);
+    return res;
+  }
+
+  function completeVerification(token: string, user: User) {
+    setToken(token);
+    setUser(user);
   }
 
   function logout() {
@@ -58,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, completeVerification, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

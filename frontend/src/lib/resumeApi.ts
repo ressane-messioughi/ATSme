@@ -139,10 +139,24 @@ export function duplicateVersion(id: number | string, versionId: number) {
   return api<Resume>(`/resumes/${id}/versions/${versionId}/duplicate`, { method: "POST" });
 }
 
+export type JobMatchResult = {
+  score: number;
+  matched: string[];
+  missing: string[];
+  suggestions: string[];
+  source: "ai" | "keywords";
+};
 export function jobMatch(id: number | string, jobText: string) {
-  return api<{ score: number; matched: string[]; missing: string[] }>(`/resumes/${id}/job-match`, {
+  return api<JobMatchResult>(`/resumes/${id}/job-match`, {
     method: "POST",
     body: JSON.stringify({ jobText }),
+  });
+}
+
+export function redeemPromoCode(code: string) {
+  return api<{ ok: boolean; message: string; user: unknown }>("/promo-codes/redeem", {
+    method: "POST",
+    body: JSON.stringify({ code }),
   });
 }
 export function latestJobMatch(id: number | string) {

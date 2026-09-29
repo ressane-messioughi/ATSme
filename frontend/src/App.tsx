@@ -27,6 +27,10 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers.tsx"));
 const AdminResumes = lazy(() => import("./pages/admin/AdminResumes.tsx"));
 const Confidentialite = lazy(() => import("./pages/Confidentialite.tsx"));
 const MentionsLegales = lazy(() => import("./pages/MentionsLegales.tsx"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail.tsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.tsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
+const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes.tsx"));
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -44,6 +48,9 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/inscription" element={<Register />} />
+      <Route path="/verifier-email" element={<VerifyEmail />} />
+      <Route path="/mot-de-passe-oublie" element={<ForgotPassword />} />
+      <Route path="/reinitialiser-mot-de-passe" element={<ResetPassword />} />
       <Route path="/confidentialite" element={<Confidentialite />} />
       <Route path="/mentions-legales" element={<MentionsLegales />} />
 
@@ -66,6 +73,7 @@ export default function App() {
         <Route index element={<AdminDashboard />} />
         <Route path="utilisateurs" element={<AdminUsers />} />
         <Route path="cv" element={<AdminResumes />} />
+        <Route path="codes-promo" element={<AdminPromoCodes />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

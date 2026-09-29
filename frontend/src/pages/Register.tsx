@@ -1,7 +1,7 @@
 import { type CSSProperties, type FormEvent, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
-import { ApiError } from "../lib/api.ts";
+import { api, ApiError } from "../lib/api.ts";
 import AuthLayout from "../components/AuthLayout.tsx";
 
 const fieldStyle: CSSProperties = {
@@ -17,12 +17,13 @@ const fieldStyle: CSSProperties = {
 
 export default function Register() {
   const { user, register } = useAuth();
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -31,13 +32,49 @@ export default function Register() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(email, password, name);
-      navigate("/");
+      const res = await register(email, password, name);
+      setSentTo(res.email);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Inscription impossible");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function onResend() {
+    if (!sentTo) return;
+    setResendState("sending");
+    try {
+      await api("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email: sentTo }) });
+    } finally {
+      setResendState("sent");
+      setTimeout(() => setResendState("idle"), 4000);
+    }
+  }
+
+  if (sentTo) {
+    return (
+      <AuthLayout title="Vérifiez votre boîte mail" subtitle="Un lien de confirmation vient d'être envoyé.">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm" style={{ color: "var(--t-ink2)" }}>
+            Nous avons envoyé un email à <strong>{sentTo}</strong>. Ouvrez-le et cliquez sur le lien pour activer votre
+            compte (valable 24h). Pensez à vérifier vos spams.
+          </p>
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={resendState === "sending"}
+            className="self-start font-semibold text-sm underline underline-offset-[3px] cursor-pointer disabled:opacity-60"
+            style={{ color: "var(--t-accent)" }}
+          >
+            {resendState === "sending" ? "Envoi..." : resendState === "sent" ? "Email renvoyé ✓" : "Renvoyer l'email"}
+          </button>
+          <Link to="/connexion" className="text-sm font-semibold underline underline-offset-[3px]" style={{ color: "var(--t-ink2)" }}>
+            Retour à la connexion
+          </Link>
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (

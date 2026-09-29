@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar, { SidebarContent } from "./Sidebar.tsx";
 import MobileDrawer from "./MobileDrawer.tsx";
 import { useAuth } from "../lib/auth.tsx";
+import { Avatar } from "../lib/avatars.tsx";
 
 const CRUMBS: Record<string, [string, string]> = {
   "/dashboard": ["ATSme", "Tableau de bord"],
@@ -110,13 +111,7 @@ export default function AppShell() {
               className="flex items-center gap-2 min-h-11 pr-2.5 pl-1 rounded-[var(--t-r-pill)] cursor-pointer"
               style={{ border: "1px solid var(--t-line-soft)", background: "var(--t-surface)", color: "var(--t-ink)" }}
             >
-              <span
-                aria-hidden="true"
-                className="w-[34px] h-[34px] rounded-full grid place-items-center font-bold text-sm"
-                style={{ background: "var(--t-pop)", color: "var(--t-on-accent)" }}
-              >
-                {user?.name?.slice(0, 1).toUpperCase()}
-              </span>
+              <Avatar avatar={user?.avatar} name={user?.name} size={34} />
               <span className="font-semibold text-sm">{user?.name}</span>
               <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
                 <path d="M6 9l6 6 6-6" />

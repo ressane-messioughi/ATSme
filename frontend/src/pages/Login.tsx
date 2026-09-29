@@ -1,7 +1,7 @@
 import { type CSSProperties, type FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
-import { ApiError } from "../lib/api.ts";
+import { api, ApiError } from "../lib/api.ts";
 import AuthLayout from "../components/AuthLayout.tsx";
 
 const fieldStyle: CSSProperties = {
@@ -21,6 +21,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [submitting, setSubmitting] = useState(false);
 
   if (user) return <Navigate to="/dashboard" replace />;
@@ -28,14 +30,30 @@ export default function Login() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
     setSubmitting(true);
     try {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Connexion impossible");
+      if (err instanceof ApiError && err.status === 403) {
+        setNeedsVerification(true);
+        setError("Votre email n'est pas encore confirmé.");
+      } else {
+        setError(err instanceof ApiError ? err.message : "Connexion impossible");
+      }
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function onResend() {
+    setResendState("sending");
+    try {
+      await api("/auth/resend-verification", { method: "POST", body: JSON.stringify({ email }) });
+    } finally {
+      setResendState("sent");
+      setTimeout(() => setResendState("idle"), 4000);
     }
   }
 
@@ -55,7 +73,12 @@ export default function Login() {
           />
         </label>
         <label className="flex flex-col gap-1.5 font-semibold text-[13px]" style={{ color: "var(--t-ink2)" }}>
-          Mot de passe
+          <span className="flex items-center justify-between gap-2">
+            Mot de passe
+            <Link to="/mot-de-passe-oublie" className="font-semibold text-[13px] underline underline-offset-[3px]" style={{ color: "var(--t-accent)" }}>
+              Oublié ?
+            </Link>
+          </span>
           <input
             type="password"
             autoComplete="current-password"
@@ -70,6 +93,17 @@ export default function Login() {
           <p className="text-sm" style={{ color: "var(--t-danger)" }}>
             {error}
           </p>
+        )}
+        {needsVerification && (
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={resendState === "sending"}
+            className="self-start font-semibold text-sm underline underline-offset-[3px] cursor-pointer disabled:opacity-60 -mt-2"
+            style={{ color: "var(--t-accent)" }}
+          >
+            {resendState === "sending" ? "Envoi..." : resendState === "sent" ? "Email renvoyé ✓" : "Renvoyer l'email de confirmation"}
+          </button>
         )}
         <button
           type="submit"

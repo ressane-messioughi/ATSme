@@ -13,12 +13,18 @@ import {
   requireAuth,
   requireAdmin,
   updateUserName,
+  updateUserAvatar,
   changePassword,
+  verifyEmailToken,
+  resendVerification,
+  requestPasswordReset,
+  resetPasswordWithToken,
 } from "./auth.js";
 import { emptyResumeData, normalizeResumeData, newId } from "./resumeModel.js";
 import { scoreResume } from "./scoring.js";
 import { extractText, structureFromText } from "./parsing.js";
 import { matchResumeToJob } from "./jobMatch.js";
+import { aiJobMatch } from "./aiJobMatch.js";
 import { buildResumePdf } from "./exporters/pdf.js";
 import { buildResumeDocx } from "./exporters/docx.js";
 import { buildResumeTxt } from "./exporters/txt.js";
@@ -133,8 +139,9 @@ app.post("/api/auth/register", authRateLimit, async (req, res) => {
   if (await findUserByEmail(email)) {
     return res.status(409).json({ error: "un compte existe déjà avec cet email" });
   }
-  const user = await createUser({ email, password, name: trimmedName });
-  res.status(201).json({ token: issueToken(user), user });
+  await createUser({ email, password, name: trimmedName });
+  // Pas de connexion automatique : l'email doit être confirmé avant tout accès (cf. login).
+  res.status(201).json({ needsVerification: true, email });
 });
 
 app.post("/api/auth/login", authRateLimit, async (req, res) => {
@@ -142,7 +149,41 @@ app.post("/api/auth/login", authRateLimit, async (req, res) => {
   if (!email || !password || password.length > 200) return res.status(401).json({ error: "identifiants invalides" });
   const user = await findUserAndCheckPassword(email, password);
   if (!user) return res.status(401).json({ error: "identifiants invalides" });
+  if (!user.email_verified_at) {
+    return res.status(403).json({ error: "email non vérifié", code: "email_not_verified", email: user.email });
+  }
   res.json({ token: issueToken(user), user });
+});
+
+app.post("/api/auth/verify-email", authRateLimit, async (req, res) => {
+  const token = String(req.body?.token || "");
+  if (!token) return res.status(400).json({ error: "jeton requis" });
+  const user = await verifyEmailToken(token);
+  if (!user) return res.status(400).json({ error: "lien invalide ou expiré" });
+  res.json({ token: issueToken(user), user });
+});
+
+app.post("/api/auth/resend-verification", authRateLimit, async (req, res) => {
+  const { email } = req.body || {};
+  if (isEmail(email)) await resendVerification(email).catch(() => {});
+  // Réponse générique dans tous les cas : n'indique jamais si le compte existe ou est déjà vérifié.
+  res.json({ ok: true });
+});
+
+app.post("/api/auth/forgot-password", authRateLimit, async (req, res) => {
+  const { email } = req.body || {};
+  if (isEmail(email)) await requestPasswordReset(email).catch(() => {});
+  res.json({ ok: true });
+});
+
+app.post("/api/auth/reset-password", authRateLimit, async (req, res) => {
+  const { token, newPassword } = req.body || {};
+  if (!token || !newPassword || newPassword.length < 8 || newPassword.length > 200) {
+    return res.status(400).json({ error: "jeton et nouveau mot de passe (8 à 200 caractères) requis" });
+  }
+  const ok = await resetPasswordWithToken(token, newPassword);
+  if (!ok) return res.status(400).json({ error: "lien invalide ou expiré" });
+  res.json({ ok: true });
 });
 
 app.get("/api/me", requireAuth, async (req, res) => {
@@ -152,9 +193,19 @@ app.get("/api/me", requireAuth, async (req, res) => {
 });
 
 app.put("/api/me", requireAuth, async (req, res) => {
-  const name = String(req.body?.name || "").trim().slice(0, 120);
-  if (!name) return res.status(400).json({ error: "nom requis" });
-  await updateUserName(req.user.sub, name);
+  const { name, avatar } = req.body || {};
+  if (name !== undefined) {
+    const trimmed = String(name || "").trim().slice(0, 120);
+    if (!trimmed) return res.status(400).json({ error: "nom requis" });
+    await updateUserName(req.user.sub, trimmed);
+  }
+  if (avatar !== undefined) {
+    try {
+      await updateUserAvatar(req.user.sub, avatar || null);
+    } catch {
+      return res.status(400).json({ error: "avatar invalide" });
+    }
+  }
   const user = await findUserByEmail(req.user.email);
   res.json(user);
 });
@@ -207,12 +258,13 @@ const PLAN_LIMITS = {
 };
 
 async function checkResumeQuota(req, res) {
-  const [[user]] = await db.query("SELECT plan FROM users WHERE id = ?", [req.user.sub]);
+  const [[user]] = await db.query("SELECT plan, bonus_resumes FROM users WHERE id = ?", [req.user.sub]);
   const plan = user?.plan || "free";
-  const limit = PLAN_LIMITS[plan]?.maxResumes ?? PLAN_LIMITS.free.maxResumes;
+  const base = PLAN_LIMITS[plan]?.maxResumes ?? PLAN_LIMITS.free.maxResumes;
+  const limit = base === Infinity ? base : base + (user?.bonus_resumes || 0);
   const [[{ count }]] = await db.query("SELECT COUNT(*) AS count FROM resumes WHERE user_id = ?", [req.user.sub]);
   if (count >= limit) {
-    res.status(403).json({ error: `Limite de ${limit} CV atteinte pour votre offre (${plan}). Supprimez un CV existant ou passez à une offre supérieure.` });
+    res.status(403).json({ error: `Limite de ${limit} CV atteinte pour votre offre (${plan}). Supprimez un CV existant, utilisez un code promo ou passez à une offre supérieure.` });
     return false;
   }
   return true;
@@ -397,10 +449,14 @@ app.post("/api/resumes/:id/job-match", requireAuth, async (req, res) => {
   if (!jobText.trim()) return res.status(400).json({ error: "texte de l'offre requis" });
 
   const data = normalizeResumeData(typeof row.data === "string" ? JSON.parse(row.data) : row.data);
-  const result = matchResumeToJob(data, jobText);
+  // L'IA (Gemini, si GEMINI_API_KEY est configurée) donne une analyse plus fine ; en son
+  // absence ou en cas d'échec (quota, réseau, clé manquante), repli silencieux sur l'analyse
+  // déterministe par mots-clés — l'utilisateur obtient toujours un résultat.
+  let result = await aiJobMatch(data, jobText).catch(() => null);
+  if (!result) result = { ...matchResumeToJob(data, jobText), suggestions: [], source: "keywords" };
   await db.query(
-    "INSERT INTO job_matches (resume_id, job_text, match_score, matched_keywords, missing_keywords) VALUES (?, ?, ?, ?, ?)",
-    [row.id, jobText, result.score, JSON.stringify(result.matched), JSON.stringify(result.missing)]
+    "INSERT INTO job_matches (resume_id, job_text, match_score, matched_keywords, missing_keywords, ai_suggestions, source) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    [row.id, jobText, result.score, JSON.stringify(result.matched), JSON.stringify(result.missing), JSON.stringify(result.suggestions || []), result.source]
   );
   res.json(result);
 });
@@ -409,10 +465,68 @@ app.get("/api/resumes/:id/job-match/latest", requireAuth, async (req, res) => {
   const row = await ownedResumeRow(req.params.id, req.user.sub);
   if (!row) return res.status(404).json({ error: "introuvable" });
   const [rows] = await db.query(
-    "SELECT match_score AS score, matched_keywords AS matched, missing_keywords AS missing, created_at FROM job_matches WHERE resume_id = ? ORDER BY created_at DESC LIMIT 1",
+    "SELECT match_score AS score, matched_keywords AS matched, missing_keywords AS missing, ai_suggestions AS suggestions, source, created_at FROM job_matches WHERE resume_id = ? ORDER BY created_at DESC LIMIT 1",
     [row.id]
   );
   res.json(rows[0] || null);
+});
+
+// ---------- Codes promo ----------
+
+app.post("/api/promo-codes/redeem", requireAuth, authRateLimit, async (req, res) => {
+  const code = String(req.body?.code || "").trim().toUpperCase();
+  if (!code) return res.status(400).json({ error: "code requis" });
+
+  const [rows] = await db.query(
+    "SELECT * FROM promo_codes WHERE code = ? AND active = 1 AND (expires_at IS NULL OR expires_at > NOW())",
+    [code]
+  );
+  const promo = rows[0];
+  if (!promo) return res.status(404).json({ error: "code promo invalide ou expiré" });
+  if (promo.max_redemptions != null && promo.redemptions_count >= promo.max_redemptions) {
+    return res.status(410).json({ error: "ce code a atteint sa limite d'utilisation" });
+  }
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [ins] = await conn
+      .query("INSERT INTO promo_redemptions (promo_code_id, user_id) VALUES (?, ?)", [promo.id, req.user.sub])
+      .catch((err) => {
+        if (err.code === "ER_DUP_ENTRY") return [null];
+        throw err;
+      });
+    if (!ins) {
+      await conn.rollback();
+      return res.status(409).json({ error: "vous avez déjà utilisé ce code" });
+    }
+    const [upd] = await conn.query(
+      "UPDATE promo_codes SET redemptions_count = redemptions_count + 1 WHERE id = ? AND (max_redemptions IS NULL OR redemptions_count < max_redemptions)",
+      [promo.id]
+    );
+    if (upd.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(410).json({ error: "ce code a atteint sa limite d'utilisation" });
+    }
+    if (promo.kind === "plan") {
+      await conn.query("UPDATE users SET plan = ? WHERE id = ?", [promo.plan_value, req.user.sub]);
+    } else {
+      await conn.query("UPDATE users SET bonus_resumes = bonus_resumes + ? WHERE id = ?", [promo.resumes_value, req.user.sub]);
+    }
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+
+  const user = await findUserByEmail(req.user.email);
+  res.json({
+    ok: true,
+    message: promo.kind === "plan" ? `Offre ${promo.plan_value} activée.` : `${promo.resumes_value} CV bonus ajoutés.`,
+    user,
+  });
 });
 
 // ---------- Export ----------
@@ -527,6 +641,56 @@ app.get("/api/admin/resumes/:id/export/:format", requireAdmin, async (req, res) 
   const [rows] = await db.query("SELECT * FROM resumes WHERE id = ?", [req.params.id]);
   if (!rows.length) return res.status(404).json({ error: "introuvable" });
   await sendExport(res, rows[0], req.params.format);
+});
+
+app.get("/api/admin/promo-codes", requireAdmin, async (req, res) => {
+  const [rows] = await db.query("SELECT * FROM promo_codes ORDER BY created_at DESC");
+  res.json(rows);
+});
+
+app.post("/api/admin/promo-codes", requireAdmin, async (req, res) => {
+  const { code, kind, planValue, resumesValue, maxRedemptions, expiresAt } = req.body || {};
+  const cleanCode = String(code || "").trim().toUpperCase().slice(0, 40);
+  if (!/^[A-Z0-9_-]{3,40}$/.test(cleanCode)) {
+    return res.status(400).json({ error: "code invalide (3 à 40 caractères, lettres/chiffres/-/_)" });
+  }
+  if (kind !== "plan" && kind !== "resumes") return res.status(400).json({ error: "type invalide" });
+  if (kind === "plan" && !Object.keys(PLAN_LIMITS).includes(planValue)) {
+    return res.status(400).json({ error: `offre invalide. Valeurs acceptées : ${Object.keys(PLAN_LIMITS).join(", ")}.` });
+  }
+  if (kind === "resumes" && (!Number.isInteger(resumesValue) || resumesValue < 1 || resumesValue > 1000)) {
+    return res.status(400).json({ error: "nombre de CV bonus invalide (1 à 1000)" });
+  }
+  const maxRed = maxRedemptions === "" || maxRedemptions == null ? null : Number(maxRedemptions);
+  if (maxRed != null && (!Number.isInteger(maxRed) || maxRed < 1)) {
+    return res.status(400).json({ error: "limite d'utilisation invalide" });
+  }
+  try {
+    const [result] = await db.query(
+      "INSERT INTO promo_codes (code, kind, plan_value, resumes_value, max_redemptions, expires_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [cleanCode, kind, kind === "plan" ? planValue : null, kind === "resumes" ? resumesValue : null, maxRed, expiresAt || null, req.user.sub]
+    );
+    const [rows] = await db.query("SELECT * FROM promo_codes WHERE id = ?", [result.insertId]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    if (err.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "ce code existe déjà" });
+    throw err;
+  }
+});
+
+app.patch("/api/admin/promo-codes/:id", requireAdmin, async (req, res) => {
+  const { active } = req.body || {};
+  if (typeof active !== "boolean") return res.status(400).json({ error: "champ 'active' booléen requis" });
+  const [result] = await db.query("UPDATE promo_codes SET active = ? WHERE id = ?", [active ? 1 : 0, req.params.id]);
+  if (result.affectedRows === 0) return res.status(404).json({ error: "introuvable" });
+  const [rows] = await db.query("SELECT * FROM promo_codes WHERE id = ?", [req.params.id]);
+  res.json(rows[0]);
+});
+
+app.delete("/api/admin/promo-codes/:id", requireAdmin, async (req, res) => {
+  const [result] = await db.query("DELETE FROM promo_codes WHERE id = ?", [req.params.id]);
+  if (result.affectedRows === 0) return res.status(404).json({ error: "introuvable" });
+  res.json({ ok: true });
 });
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "atsme-api" }));

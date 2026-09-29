@@ -13,7 +13,7 @@ export async function ensureAdminUser() {
   }
   const password_hash = await bcrypt.hash(password, 10);
   await db.query(
-    "INSERT INTO users (email, password_hash, name, is_admin) VALUES (?, ?, 'Admin ATSme', 1)",
+    "INSERT INTO users (email, password_hash, name, is_admin, email_verified_at) VALUES (?, ?, 'Admin ATSme', 1, NOW())",
     [email, password_hash]
   );
   console.log(`atsme-api: compte admin initialisé (${email})`);

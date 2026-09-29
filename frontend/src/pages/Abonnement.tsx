@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
 import { IconCheck } from "../components/icons.tsx";
+import { redeemPromoCode } from "../lib/resumeApi";
+import { ApiError } from "../lib/api.ts";
 
 const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", premium: "Premium", entreprise: "Entreprise" };
 
@@ -90,13 +92,34 @@ const EXAMPLES: Example[] = [
 const PACKS = [1, 3, 5, 10];
 
 export default function Abonnement() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const plan = user?.plan || "free";
   const [qty, setQty] = useState(3);
   const [open, setOpen] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+
+  const [promoCode, setPromoCode] = useState("");
+  const [promoState, setPromoState] = useState<"idle" | "saving">("idle");
+  const [promoMsg, setPromoMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  async function onRedeemPromo(e: FormEvent) {
+    e.preventDefault();
+    if (!promoCode.trim()) return;
+    setPromoState("saving");
+    setPromoMsg(null);
+    try {
+      const res = await redeemPromoCode(promoCode.trim());
+      setPromoMsg({ kind: "ok", text: res.message });
+      setPromoCode("");
+      await refreshUser();
+    } catch (err) {
+      setPromoMsg({ kind: "error", text: err instanceof ApiError ? err.message : "Code invalide." });
+    } finally {
+      setPromoState("idle");
+    }
+  }
 
   function setQtyClamped(v: number) {
     setQty(Math.max(1, Math.min(50, Math.round(v) || 1)));
@@ -163,6 +186,38 @@ export default function Abonnement() {
       >
         Le paiement en ligne n'est pas encore activé sur ATSme. Cette page montre à quoi ressemblera l'achat de crédits et l'offre Pro.
       </div>
+
+      <section aria-labelledby="promo-h" className="p-6 rounded-[var(--t-r-lg)] flex flex-col gap-3.5" style={sectionStyle}>
+        <h2 id="promo-h" className="font-black text-[19px] m-0" style={{ fontFamily: "var(--t-display)" }}>
+          Vous avez un code promo ?
+        </h2>
+        <form onSubmit={onRedeemPromo} className="flex flex-wrap gap-3 items-end">
+          <label className="flex flex-col gap-1.5 font-semibold text-[13px] flex-1 min-w-[200px]" style={{ color: "var(--t-ink2)" }}>
+            Code
+            <input
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="EX. LANCEMENT5"
+              className="min-h-11 px-3 rounded-[var(--t-r-md)] outline-none uppercase"
+              style={{ border: "1.5px solid var(--t-field-line)", background: "var(--t-field)", color: "var(--t-ink)", fontSize: 15 }}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={promoState === "saving" || !promoCode.trim()}
+            className="min-h-11 px-5 rounded-[var(--t-r-md)] font-semibold text-[15px] cursor-pointer disabled:opacity-50"
+            style={{ border: "1.5px solid var(--t-line)", background: "var(--t-accent)", color: "var(--t-on-accent)", boxShadow: "0 2px 0 var(--t-shadow)" }}
+          >
+            {promoState === "saving" ? "Vérification..." : "Appliquer"}
+          </button>
+        </form>
+        {promoMsg && (
+          <p className="text-sm m-0" style={{ color: promoMsg.kind === "ok" ? "var(--t-accent)" : "var(--t-danger)" }}>
+            {promoMsg.kind === "ok" ? "✓ " : ""}
+            {promoMsg.text}
+          </p>
+        )}
+      </section>
 
       <div className="grid gap-5 items-stretch" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))" }}>
         <section
